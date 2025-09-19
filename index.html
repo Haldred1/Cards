@@ -1,60 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>S++ Cards - Premium Prices, Questionable Quality</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My VTC Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1420;          /* deep night blue */
+      --panel:#0f1a2b;       /* card background */
+      --panel-2:#111f33;     /* panel hover */
+      --text:#e6f1ff;        /* primary text */
+      --muted:#9db0c9;       /* secondary text */
+      --accent:#28d7ff;      /* cyan accent */
+      --accent-2:#6ff0d1;    /* teal accent */
+      --warn:#ffce6a;        /* warning */
+      --danger:#ff7a7a;      /* danger */
+      --ok:#7affb4;          /* success */
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:radial-gradient(1000px 700px at 10% -10%, rgba(40,215,255,.12), transparent 70%),
+                                         radial-gradient(900px 600px at 110% 0%, rgba(111,240,209,.10), transparent 65%),
+                                         var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+    a{color:var(--accent);text-decoration:none}
+    .container{max-width:1200px;margin:0 auto;padding:28px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+    .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:var(--shadow)}
+    h1{font-size:28px;margin:0;font-weight:800;letter-spacing:.2px}
+    .subtitle{color:var(--muted);margin-top:4px}
+    .bar{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 26px}
+    .chip{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.06);padding:12px 14px;border-radius:999px;color:var(--muted)}
+
+    /* Panels */
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:18px}
+    .card{grid-column:span 12;background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card h2{font-size:18px;margin:0 0 14px 0;font-weight:800}
+    .card .inner{padding:18px}
+    @media (min-width: 900px){
+      .span-4{grid-column:span 4}
+      .span-6{grid-column:span 6}
+      .span-8{grid-column:span 8}
+      .span-12{grid-column:span 12}
+    }
+
+    /* KPI tiles */
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .kpi{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);padding:16px;border-radius:14px}
+    .kpi .label{color:var(--muted);font-size:12px}
+    .kpi .value{font-size:22px;font-weight:800;margin-top:6px}
+    .trend{font-size:12px;margin-top:6px}
+
+    /* Tables */
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th,td{text-align:left;padding:12px 14px}
+    th{font-size:12px;color:var(--muted);font-weight:600}
+    tbody tr{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+    tbody tr td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
+    tbody tr td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
+
+    /* Badges */
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.08);font-size:12px;color:var(--muted)}
+
+    /* Footer */
+    footer{opacity:.8;color:var(--muted);font-size:12px;margin-top:30px}
+
+    .pill{padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+  </style>
+</head>
+<body>
+  <div class="container">
     <header>
-      <h1>S++ Cards</h1>
-      <p class="tagline">Low Quality. High Prices. Zero Shame.</p>
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1 id="vtcName">Your VTC Name</h1>
+        <div class="subtitle" id="vtcTagline">Clean, Trucky‑inspired dashboard for ETS2/ATS convoys & stats</div>
+      </div>
     </header>
 
-    <section class="store">
-      <h2>Shop Our "Best" Sellers</h2>
-      <div class="card-grid">
-        <div class="card-item">
-          <img src="1.jpg" alt="Bent Card" />
-          <h3>Bent Dragon</h3>
-          <p>Only 3 corners folded!</p>
-          <span class="price">£19.99</span>
-        </div>
-        <div class="card-item">
-          <img src="1_1.png" alt="Misprint Card" />
-          <h3>Perfect Unique Pikachu!</h3>
-          <p>Text printed sideways for that unique touch!</p>
-          <span class="price">£24.99</span>
-        </div>
-        <div class="card-item">
-          <img src="3.jpg" alt="Common Card" />
-          <h3>Super Common Goblin</h3>
-          <p>Comes in every pack (whether you want it or not).</p>
-          <span class="price">£14.99</span>
+    <div class="bar">
+      <span class="chip">Server: <strong id="serverName">Simulation 1</strong></span>
+      <span class="chip">Timezone: <strong>Europe/London</strong></span>
+      <span class="chip">Last sync: <strong id="lastSync">—</strong></span>
+      <span class="chip">Theme: <strong class="pill">Trucky‑style (cyan/teal)</strong></span>
+    </div>
+
+    <section class="grid">
+      <div class="card span-12">
+        <div class="inner">
+          <h2>Overview</h2>
+          <div class="kpis" id="kpis">
+            <div class="kpi"><div class="label">Members</div><div class="value" id="k_members">—</div><div class="trend" id="t_members"></div></div>
+            <div class="kpi"><div class="label">Jobs (30d)</div><div class="value" id="k_jobs">—</div><div class="trend" id="t_jobs"></div></div>
+            <div class="kpi"><div class="label">Distance (30d)</div><div class="value" id="k_km">—</div><div class="trend" id="t_km"></div></div>
+            <div class="kpi"><div class="label">Avg Damage</div><div class="value" id="k_dmg">—</div><div class="trend" id="t_dmg"></div></div>
+          </div>
         </div>
       </div>
-    </section>
 
-    <section class="reviews">
-      <h2>Customer Reviews</h2>
-      <div class="review-carousel">
-        <blockquote>
-          ⭐☆☆☆☆ “My pack had a leaf in it. Not a foil—an actual leaf.”
-        </blockquote>
-        <blockquote>
-          ⭐☆☆☆☆ “Bought 3 packs. Got 3 copies of the same garbage.”
-        </blockquote>
-        <blockquote>
-          ★★★★★ “Exactly what I expected from a guy who can't shuffle.”
-        </blockquote>
+      <div class="card span-8">
+        <div class="inner">
+          <h2>Recent Jobs</h2>
+          <table>
+            <thead>
+              <tr><th>Driver</th><th>Cargo</th><th>From → To</th><th>Time</th><th>KM</th><th>Damage</th></tr>
+            </thead>
+            <tbody id="jobsTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card span-4">
+        <div class="inner">
+          <h2>Leaderboard (30d)</h2>
+          <table>
+            <thead>
+              <tr><th>Driver</th><th>Jobs</th><th>KM</th></tr>
+            </thead>
+            <tbody id="lbTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card span-12">
+        <div class="inner">
+          <h2>Members</h2>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Role</th><th>Joined</th><th>Status</th></tr>
+            </thead>
+            <tbody id="membersTable"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
     <footer>
-      <p>&copy; 2025 S++ Cards Scams Inc. All rights exaggerated.</p>
+      <p>
+        This site is a community-made, Trucky‑inspired theme. Replace API endpoints in <code>CONFIG</code> with your own (public endpoints or your serverless proxy). No tokens are exposed in the browser.
+      </p>
     </footer>
-  </body>
+  </div>
+
+  <script>
+    // ======== CONFIG ========
+    const CONFIG = {
+      VTC_NAME: "Your VTC Name",
+      TAGLINE: "Clean, Trucky‑inspired dashboard for ETS2/ATS convoys & stats",
+      // IMPORTANT: Point these to your PUBLIC endpoints or your proxy that injects secrets server-side.
+      // Keep them as-is to see demo data.
+      ENDPOINTS: {
+        overview: "/demo/overview.json",      // total members, jobs_30d, km_30d, avg_damage, deltas
+        jobs: "/demo/jobs.json",              // recent jobs list
+        leaderboard: "/demo/leaderboard.json",// top drivers
+        members: "/demo/members.json"         // member roster
+      }
+    };
+
+    // ======== DEMO DATA (used if the real fetch fails OR you keep demo paths) ========
+    const DEMO = {
+      overview: { members: 86, jobs_30d: 412, km_30d: 182450, avg_damage: 0.7,
+                  delta: { members: "+3 this week", jobs: "+28 vs prev week", km: "+9%", dmg: "−0.2 pp" } },
+      jobs: [
+        { driver:"Liam", cargo:"Frozen Foods", from:"Hamburg", to:"Prague", time:"1h 42m", km:704, damage:0.0 },
+        { driver:"Ava", cargo:"Chemicals (ADR)", from:"Lille", to:"Luxembourg", time:"1h 03m", km:371, damage:0.5 },
+        { driver:"Noah", cargo:"Heavy Machinery", from:"Graz", to:"Turin", time:"3h 14m", km:1024, damage:1.2 },
+        { driver:"Maya", cargo:"Electronics", from:"Bratislava", to:"Kassel", time:"2h 12m", km:820, damage:0.0 },
+        { driver:"Oliver", cargo:"Fuel (ADR)", from:"Poznań", to:"Berlin", time:"0h 55m", km:276, damage:0.3 }
+      ],
+      leaderboard: [
+        { driver:"Ava", jobs:56, km:24120 },{ driver:"Maya", jobs:49, km:22790 },{ driver:"Liam", jobs:44, km:22040 },{ driver:"Noah", jobs:39, km:19810 },{ driver:"Oliver", jobs:36, km:17550 }
+      ],
+      members: [
+        { name:"Ava", role:"Manager", joined:"2023‑11‑02", status:"Active" },
+        { name:"Liam", role:"Dispatcher", joined:"2024‑03‑18", status:"Active" },
+        { name:"Maya", role:"Driver", joined:"2024‑12‑09", status:"Active" },
+        { name:"Noah", role:"Driver", joined:"2025‑02‑21", status:"On Leave" },
+        { name:"Oliver", role:"Driver", joined:"2025‑06‑11", status:"Active" }
+      ]
+    };
+
+    // ======== Fetch helper with graceful demo fallback ========
+    async function getJSON(url){
+      try{
+        const res = await fetch(url, { cache: "no-store" });
+        if(!res.ok) throw new Error("HTTP "+res.status);
+        return await res.json();
+      }catch(e){
+        // Map demo endpoints to bundled demo data
+        if(url.includes("overview")) return DEMO.overview;
+        if(url.includes("jobs")) return DEMO.jobs;
+        if(url.includes("leaderboard")) return DEMO.leaderboard;
+        if(url.includes("members")) return DEMO.members;
+        throw e;
+      }
+    }
+
+    // ======== Render functions ========
+    function setText(id, text){ document.getElementById(id).textContent = text; }
+    function fmtKm(n){ return new Intl.NumberFormat().format(n) + " km"; }
+
+    function renderOverview(data){
+      setText("k_members", data.members);
+      setText("k_jobs", new Intl.NumberFormat().format(data.jobs_30d));
+      setText("k_km", fmtKm(data.km_30d));
+      setText("k_dmg", (data.avg_damage?.toFixed?.(1) ?? data.avg_damage) + "%");
+      setText("t_members", data.delta?.members || "");
+      setText("t_jobs", data.delta?.jobs || "");
+      setText("t_km", data.delta?.km || "");
+      setText("t_dmg", data.delta?.dmg || "");
+    }
+
+    function renderJobs(list){
+      const tbody = document.getElementById("jobsTable");
+      tbody.innerHTML = list.map(j => `
+        <tr>
+          <td>${escapeHtml(j.driver)}</td>
+          <td><span class="badge">${escapeHtml(j.cargo)}</span></td>
+          <td>${escapeHtml(j.from)} → ${escapeHtml(j.to)}</td>
+          <td>${escapeHtml(j.time)}</td>
+          <td>${new Intl.NumberFormat().format(j.km)}</td>
+          <td>${(j.damage ?? 0).toFixed(1)}%</td>
+        </tr>`).join("");
+    }
+
+    function renderLeaderboard(list){
+      const tbody = document.getElementById("lbTable");
+      tbody.innerHTML = list.map((r,i)=>`
+        <tr>
+          <td>${i+1}. ${escapeHtml(r.driver)}</td>
+          <td>${r.jobs}</td>
+          <td>${new Intl.NumberFormat().format(r.km)}</td>
+        </tr>`).join("");
+    }
+
+    function renderMembers(list){
+      const tbody = document.getElementById("membersTable");
+      tbody.innerHTML = list.map(m=>`
+        <tr>
+          <td>${escapeHtml(m.name)}</td>
+          <td>${escapeHtml(m.role)}</td>
+          <td>${escapeHtml(m.joined)}</td>
+          <td>${escapeHtml(m.status)}</td>
+        </tr>`).join("");
+    }
+
+    // Simple XSS-safe text
+    function escapeHtml(s){ return String(s).replace(/[&<>"]\/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+    // ======== Init ========
+    async function init(){
+      document.getElementById("vtcName").textContent = CONFIG.VTC_NAME;
+      document.getElementById("vtcTagline").textContent = CONFIG.TAGLINE;
+      document.getElementById("lastSync").textContent = new Date().toLocaleString();
+
+      const [overview,jobs,lb,members] = await Promise.all([
+        getJSON(CONFIG.ENDPOINTS.overview),
+        getJSON(CONFIG.ENDPOINTS.jobs),
+        getJSON(CONFIG.ENDPOINTS.leaderboard),
+        getJSON(CONFIG.ENDPOINTS.members)
+      ]);
+
+      renderOverview(overview);
+      renderJobs(jobs);
+      renderLeaderboard(lb);
+      renderMembers(members);
+    }
+
+    init();
+  </script>
+</body>
 </html>
-
-
