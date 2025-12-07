@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Blood Pressure & BPM Tracker</title>
+  <title>Blood Pressure & Heart Rate Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -13,7 +13,7 @@
       color: #222;
     }
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       background: #ffffff;
       padding: 20px 24px;
@@ -47,7 +47,8 @@
     }
     input[type="number"],
     input[type="date"],
-    input[type="time"] {
+    input[type="time"],
+    select {
       width: 100%;
       box-sizing: border-box;
       padding: 6px 8px;
@@ -57,7 +58,8 @@
     }
     input[type="number"]:focus,
     input[type="date"]:focus,
-    input[type="time"]:focus {
+    input[type="time"]:focus,
+    select:focus {
       outline: none;
       border-color: #4f46e5;
       box-shadow: 0 0 0 1px rgba(79,70,229,0.2);
@@ -78,10 +80,12 @@
       color: #111827;
     }
     .btn-danger {
-      background: #f97373;
-      color: #111827;
+      background: #ef4444;
+      color: #fff;
     }
-    .btn-primary:disabled {
+    .btn-primary:disabled,
+    .btn-secondary:disabled,
+    .btn-danger:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
@@ -101,6 +105,15 @@
     .tag-average { background: #fef9c3; color: #854d0e; }
     .tag-high { background: #fee2e2; color: #b91c1c; }
     .tag-very-high { background: #fecaca; color: #7f1d1d; }
+
+    .header-row {
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:4px;
+      margin-bottom:4px;
+    }
 
     table {
       width: 100%;
@@ -122,18 +135,15 @@
     tbody tr:nth-child(even) {
       background: #f3f4f6;
     }
-    .header-row {
-      display:flex;
-      justify-content: space-between;
-      align-items:center;
-      gap:10px;
-      margin-top:4px;
-      margin-bottom:4px;
-    }
     .footer-note {
       margin-top: 16px;
       font-size: 0.8rem;
       color: #6b7280;
+    }
+    @media (max-width: 640px) {
+      form {
+        grid-template-columns: 1fr 1fr;
+      }
     }
   </style>
 </head>
@@ -167,7 +177,21 @@
         <input type="number" id="bpm" min="30" max="200" required />
       </div>
       <div>
-        <button type="submit" class="btn-primary">Add reading</button>
+        <label for="feeling">How I felt</label>
+        <select id="feeling">
+          <option value="">Select…</option>
+          <option value="Calm / relaxed">Calm / relaxed</option>
+          <option value="Okay">Okay</option>
+          <option value="A bit anxious">A bit anxious</option>
+          <option value="Very anxious / panicky">Very anxious / panicky</option>
+          <option value="Unwell">Unwell</option>
+          <option value="Tired / exhausted">Tired / exhausted</option>
+          <option value="Chest discomfort">Chest discomfort</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div>
+        <button type="submit" class="btn-primary" style="width:100%;">Add reading</button>
       </div>
     </form>
 
@@ -175,7 +199,7 @@
 
     <div class="header-row">
       <strong>Saved readings</strong>
-      <div style="display:flex; gap:8px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button id="downloadBtn" class="btn-secondary" disabled>Download CSV (Excel)</button>
         <button id="clearBtn" class="btn-danger" disabled>Clear all</button>
       </div>
@@ -185,12 +209,14 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>Date</th>
+          <th>Date (UK)</th>
           <th>Time</th>
           <th>Systolic</th>
           <th>Diastolic</th>
           <th>Heart rate</th>
+          <th>Feeling</th>
           <th>Category</th>
+          <th>Remove</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -209,12 +235,10 @@
     const downloadBtn = document.getElementById("downloadBtn");
     const clearBtn = document.getElementById("clearBtn");
 
-    const STORAGE_KEY = "bpReadingsV1";
-
+    const STORAGE_KEY = "bpReadingsV2"; // new key so it doesn't clash with old format
     let readings = [];
 
-    // Set default date/time to "now"
-    (function setDefaultDateTime() {
+    function setDefaultDateTime() {
       const now = new Date();
       const dateInput = document.getElementById("date");
       const timeInput = document.getElementById("time");
@@ -227,10 +251,17 @@
       const hh = String(now.getHours()).padStart(2, "0");
       const min = String(now.getMinutes()).padStart(2, "0");
       timeInput.value = `${hh}:${min}`;
-    })();
+    }
+
+    function formatDateUK(iso) {
+      if (!iso || typeof iso !== "string") return "";
+      const parts = iso.split("-");
+      if (parts.length !== 3) return iso;
+      const [yyyy, mm, dd] = parts;
+      return `${dd}/${mm}/${yyyy}`;
+    }
 
     function classifyBP(sys, dia) {
-      // Rough simple classification, not medical diagnosis
       if (sys < 90 || dia < 60) return { label: "Low", className: "tag-low" };
       if (sys < 120 && dia < 80) return { label: "Normal", className: "tag-normal" };
       if (sys < 130 && dia < 80) return { label: "Average", className: "tag-average" };
@@ -253,45 +284,25 @@
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
             readings = parsed;
-            renderTable();
-            downloadBtn.disabled = readings.length === 0;
-            clearBtn.disabled = readings.length === 0;
           }
         }
       } catch (e) {
         console.error("Unable to load readings", e);
       }
-    }
-
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      const date = document.getElementById("date").value || "";
-      const time = document.getElementById("time").value || "";
-      const sys = parseInt(document.getElementById("sys").value, 10);
-      const dia = parseInt(document.getElementById("dia").value, 10);
-      const bpm = parseInt(document.getElementById("bpm").value, 10);
-
-      if (isNaN(sys) || isNaN(dia) || isNaN(bpm)) {
-        statusDiv.textContent = "Please fill in systolic, diastolic, and heart rate.";
-        return;
-      }
-
-      const category = classifyBP(sys, dia);
-
-      const reading = { date, time, sys, dia, bpm, category: category.label };
-      readings.push(reading);
-      saveReadings();
       renderTable();
-
-      statusDiv.innerHTML = `
-        Last added: ${sys}/${dia} mmHg, ${bpm} bpm
-        – <span class="tag ${category.className}">${category.label}</span>
-      `;
-
       downloadBtn.disabled = readings.length === 0;
       clearBtn.disabled = readings.length === 0;
-    });
+    }
+
+    function deleteEntry(index) {
+      if (!confirm("Delete this entry?")) return;
+      readings.splice(index, 1);
+      saveReadings();
+      renderTable();
+      statusDiv.textContent = "";
+      downloadBtn.disabled = readings.length === 0;
+      clearBtn.disabled = readings.length === 0;
+    }
 
     function renderTable() {
       tableBody.innerHTML = "";
@@ -300,12 +311,23 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${index + 1}</td>
-          <td>${r.date || ""}</td>
+          <td>${r.dateUk || formatDateUK(r.dateIso || r.date || "")}</td>
           <td>${r.time || ""}</td>
           <td>${r.sys}</td>
           <td>${r.dia}</td>
           <td>${r.bpm}</td>
+          <td>${r.feeling || ""}</td>
           <td><span class="tag ${cat.className}">${cat.label}</span></td>
+          <td>
+            <button
+              type="button"
+              class="btn-danger"
+              style="padding:3px 8px; font-size:0.8rem;"
+              onclick="deleteEntry(${index})"
+            >
+              Delete
+            </button>
+          </td>
         `;
         tableBody.appendChild(tr);
       });
@@ -314,16 +336,30 @@
     function downloadCSV() {
       if (readings.length === 0) return;
 
-      const header = ["Index", "Date", "Time", "Systolic", "Diastolic", "Heart rate", "Category"];
-      const rows = readings.map((r, i) => [
-        i + 1,
-        r.date || "",
-        r.time || "",
-        r.sys,
-        r.dia,
-        r.bpm,
-        r.category
-      ]);
+      const header = [
+        "Index",
+        "Date (UK)",
+        "Time",
+        "Systolic",
+        "Diastolic",
+        "Heart rate",
+        "Feeling",
+        "Category"
+      ];
+
+      const rows = readings.map((r, i) => {
+        const dateUk = r.dateUk || formatDateUK(r.dateIso || r.date || "");
+        return [
+          i + 1,
+          dateUk,
+          r.time || "",
+          r.sys,
+          r.dia,
+          r.bpm,
+          r.feeling || "",
+          r.category || classifyBP(r.sys, r.dia).label
+        ];
+      });
 
       const csvContent = [header, ...rows]
         .map(row =>
@@ -360,10 +396,57 @@
       clearBtn.disabled = true;
     }
 
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const dateIso = document.getElementById("date").value || "";
+      const time = document.getElementById("time").value || "";
+      const sys = parseInt(document.getElementById("sys").value, 10);
+      const dia = parseInt(document.getElementById("dia").value, 10);
+      const bpm = parseInt(document.getElementById("bpm").value, 10);
+      const feeling = document.getElementById("feeling").value || "";
+
+      if (isNaN(sys) || isNaN(dia) || isNaN(bpm)) {
+        statusDiv.textContent = "Please fill in systolic, diastolic, and heart rate.";
+        return;
+      }
+
+      const category = classifyBP(sys, dia);
+      const dateUk = formatDateUK(dateIso);
+
+      const reading = {
+        dateIso,
+        dateUk,
+        time,
+        sys,
+        dia,
+        bpm,
+        feeling,
+        category: category.label
+      };
+
+      readings.push(reading);
+      saveReadings();
+      renderTable();
+
+      statusDiv.innerHTML = `
+        Last added: ${dateUk || "(no date)"} ${time || ""} – ${sys}/${dia} mmHg, ${bpm} bpm,
+        feeling: ${feeling || "n/a"}
+        – <span class="tag ${category.className}">${category.label}</span>
+      `;
+
+      downloadBtn.disabled = readings.length === 0;
+      clearBtn.disabled = readings.length === 0;
+    });
+
     downloadBtn.addEventListener("click", downloadCSV);
     clearBtn.addEventListener("click", clearAllReadings);
 
-    // Load any existing data on page load
+    // expose deleteEntry so the inline onclick works
+    window.deleteEntry = deleteEntry;
+
+    // init
+    setDefaultDateTime();
     loadReadings();
   </script>
 </body>
