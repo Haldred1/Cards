@@ -1,292 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Blood Pressure & BPM Tracker</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      body {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          sans-serif;
-        background: #f5f7fb;
-        margin: 0;
-        padding: 20px;
-        color: #222;
-      }
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: #ffffff;
-        padding: 20px 24px;
-        border-radius: 12px;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
-      }
-      h1 {
-        margin-top: 0;
-        font-size: 1.6rem;
-        text-align: center;
-      }
-      p.subtitle {
-        text-align: center;
-        margin-top: 0;
-        margin-bottom: 20px;
-        font-size: 0.95rem;
-        color: #555;
-      }
-      form {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px 16px;
-        margin-bottom: 16px;
-        align-items: end;
-      }
-      label {
-        font-size: 0.85rem;
-        display: block;
-        margin-bottom: 4px;
-        color: #444;
-      }
-      input[type="number"],
-      input[type="date"],
-      input[type="time"] {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 6px 8px;
-        border-radius: 6px;
-        border: 1px solid #ccc;
-        font-size: 0.9rem;
-      }
-      input[type="number"]:focus,
-      input[type="date"]:focus,
-      input[type="time"]:focus {
-        outline: none;
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.2);
-      }
-      button {
-        padding: 8px 14px;
-        border-radius: 8px;
-        border: none;
-        font-size: 0.9rem;
-        cursor: pointer;
-      }
-      .btn-primary {
-        background: #4f46e5;
-        color: #fff;
-      }
-      .btn-secondary {
-        background: #e5e7eb;
-        color: #111827;
-      }
-      .btn-primary:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-      .status {
-        margin: 6px 0 14px;
-        font-size: 0.95rem;
-      }
-      .tag {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 600;
-      }
-      .tag-low {
-        background: #dbeafe;
-        color: #1d4ed8;
-      }
-      .tag-normal {
-        background: #dcfce7;
-        color: #15803d;
-      }
-      .tag-average {
-        background: #fef9c3;
-        color: #854d0e;
-      }
-      .tag-high {
-        background: #fee2e2;
-        color: #b91c1c;
-      }
-      .tag-very-high {
-        background: #fecaca;
-        color: #7f1d1d;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <title>Blood Pressure & BPM Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 20px;
+      color: #222;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 20px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.06);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    p.subtitle {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px 16px;
+      margin-bottom: 16px;
+      align-items: end;
+    }
+    label {
+      font-size: 0.85rem;
+      display: block;
+      margin-bottom: 4px;
+      color: #444;
+    }
+    input[type="number"],
+    input[type="date"],
+    input[type="time"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+    }
+    input[type="number"]:focus,
+    input[type="date"]:focus,
+    input[type="time"]:focus {
+      outline: none;
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 1px rgba(79,70,229,0.2);
+    }
+    button {
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #4f46e5;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-danger {
+      background: #f97373;
+      color: #111827;
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .status {
+      margin: 6px 0 14px;
+      font-size: 0.95rem;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .tag-low { background: #dbeafe; color: #1d4ed8; }
+    .tag-normal { background: #dcfce7; color: #15803d; }
+    .tag-average { background: #fef9c3; color: #854d0e; }
+    .tag-high { background: #fee2e2; color: #b91c1c; }
+    .tag-very-high { background: #fecaca; color: #7f1d1d; }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 8px;
-        font-size: 0.85rem;
-        background: #f9fafb;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      thead {
-        background: #e5e7eb;
-      }
-      th,
-      td {
-        padding: 8px 6px;
-        text-align: center;
-        border-bottom: 1px solid #e5e7eb;
-      }
-      tbody tr:nth-child(even) {
-        background: #f3f4f6;
-      }
-      .footer-note {
-        margin-top: 16px;
-        font-size: 0.8rem;
-        color: #6b7280;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Blood Pressure & Heart Rate Tracker</h1>
-      <p class="subtitle">
-        Track your readings and download them as an Excel-compatible CSV
-        file.<br />
-        Categories are for guidance only – always follow your GP’s advice.
-      </p>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.85rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    thead {
+      background: #e5e7eb;
+    }
+    th, td {
+      padding: 8px 6px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tbody tr:nth-child(even) {
+      background: #f3f4f6;
+    }
+    .header-row {
+      display:flex;
+      justify-content: space-between;
+      align-items:center;
+      gap:10px;
+      margin-top:4px;
+      margin-bottom:4px;
+    }
+    .footer-note {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Blood Pressure & Heart Rate Tracker</h1>
+    <p class="subtitle">
+      Track your readings and download them as an Excel-compatible CSV file.<br />
+      Categories are for guidance only – always follow your GP’s advice.
+    </p>
 
-      <form id="bpForm">
-        <div>
-          <label for="date">Date</label>
-          <input type="date" id="date" />
-        </div>
-        <div>
-          <label for="time">Time</label>
-          <input type="time" id="time" />
-        </div>
-        <div>
-          <label for="sys">Systolic (upper, mmHg)</label>
-          <input type="number" id="sys" min="60" max="260" required />
-        </div>
-        <div>
-          <label for="dia">Diastolic (lower, mmHg)</label>
-          <input type="number" id="dia" min="40" max="160" required />
-        </div>
-        <div>
-          <label for="bpm">Heart rate (bpm)</label>
-          <input type="number" id="bpm" min="30" max="200" required />
-        </div>
-        <div>
-          <button type="submit" class="btn-primary">Add reading</button>
-        </div>
-      </form>
-
-      <div class="status" id="status"></div>
-
-      <div
-        style="
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 10px;
-          margin-top: 4px;
-        "
-      >
-        <strong>Saved readings</strong>
-        <button id="downloadBtn" class="btn-secondary" disabled>
-          Download CSV (Excel)
-        </button>
+    <form id="bpForm">
+      <div>
+        <label for="date">Date</label>
+        <input type="date" id="date" />
       </div>
+      <div>
+        <label for="time">Time</label>
+        <input type="time" id="time" />
+      </div>
+      <div>
+        <label for="sys">Systolic (upper, mmHg)</label>
+        <input type="number" id="sys" min="60" max="260" required />
+      </div>
+      <div>
+        <label for="dia">Diastolic (lower, mmHg)</label>
+        <input type="number" id="dia" min="40" max="160" required />
+      </div>
+      <div>
+        <label for="bpm">Heart rate (bpm)</label>
+        <input type="number" id="bpm" min="30" max="200" required />
+      </div>
+      <div>
+        <button type="submit" class="btn-primary">Add reading</button>
+      </div>
+    </form>
 
-      <table id="bpTable">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Systolic</th>
-            <th>Diastolic</th>
-            <th>Heart rate</th>
-            <th>Category</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div class="status" id="status"></div>
 
-      <p class="footer-note">
-        This tool is for personal tracking only and doesn’t replace medical
-        advice. If you get chest pain, severe headache, confusion, or feel very
-        unwell, seek urgent medical help.
-      </p>
+    <div class="header-row">
+      <strong>Saved readings</strong>
+      <div style="display:flex; gap:8px;">
+        <button id="downloadBtn" class="btn-secondary" disabled>Download CSV (Excel)</button>
+        <button id="clearBtn" class="btn-danger" disabled>Clear all</button>
+      </div>
     </div>
 
-    <script>
-      const form = document.getElementById("bpForm");
-      const statusDiv = document.getElementById("status");
-      const tableBody = document.querySelector("#bpTable tbody");
-      const downloadBtn = document.getElementById("downloadBtn");
+    <table id="bpTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Systolic</th>
+          <th>Diastolic</th>
+          <th>Heart rate</th>
+          <th>Category</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-      const readings = [];
+    <p class="footer-note">
+      This tool is for personal tracking only and doesn’t replace medical advice.
+      If you get chest pain, severe headache, confusion, or feel very unwell, seek urgent medical help.
+    </p>
+  </div>
 
-      // Set default date/time to "now"
-      (function setDefaultDateTime() {
-        const now = new Date();
-        const dateInput = document.getElementById("date");
-        const timeInput = document.getElementById("time");
+  <script>
+    const form = document.getElementById("bpForm");
+    const statusDiv = document.getElementById("status");
+    const tableBody = document.querySelector("#bpTable tbody");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const clearBtn = document.getElementById("clearBtn");
 
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, "0");
-        const dd = String(now.getDate()).padStart(2, "0");
-        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    const STORAGE_KEY = "bpReadingsV1";
 
-        const hh = String(now.getHours()).padStart(2, "0");
-        const min = String(now.getMinutes()).padStart(2, "0");
-        timeInput.value = `${hh}:${min}`;
-      })();
+    let readings = [];
 
-      function classifyBP(sys, dia) {
-        // Rough simple classification, not medical diagnosis
-        if (sys < 90 || dia < 60) return { label: "Low", className: "tag-low" };
-        if (sys < 120 && dia < 80)
-          return { label: "Normal", className: "tag-normal" };
-        if (sys < 130 && dia < 80)
-          return { label: "Average", className: "tag-average" };
-        if (sys < 140 && dia < 90)
-          return { label: "High", className: "tag-high" };
-        return { label: "Very high", className: "tag-very-high" };
+    // Set default date/time to "now"
+    (function setDefaultDateTime() {
+      const now = new Date();
+      const dateInput = document.getElementById("date");
+      const timeInput = document.getElementById("time");
+
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+      const hh = String(now.getHours()).padStart(2, "0");
+      const min = String(now.getMinutes()).padStart(2, "0");
+      timeInput.value = `${hh}:${min}`;
+    })();
+
+    function classifyBP(sys, dia) {
+      // Rough simple classification, not medical diagnosis
+      if (sys < 90 || dia < 60) return { label: "Low", className: "tag-low" };
+      if (sys < 120 && dia < 80) return { label: "Normal", className: "tag-normal" };
+      if (sys < 130 && dia < 80) return { label: "Average", className: "tag-average" };
+      if (sys < 140 && dia < 90) return { label: "High", className: "tag-high" };
+      return { label: "Very high", className: "tag-very-high" };
+    }
+
+    function saveReadings() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(readings));
+      } catch (e) {
+        console.error("Unable to save readings", e);
+      }
+    }
+
+    function loadReadings() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            readings = parsed;
+            renderTable();
+            downloadBtn.disabled = readings.length === 0;
+            clearBtn.disabled = readings.length === 0;
+          }
+        }
+      } catch (e) {
+        console.error("Unable to load readings", e);
+      }
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const date = document.getElementById("date").value || "";
+      const time = document.getElementById("time").value || "";
+      const sys = parseInt(document.getElementById("sys").value, 10);
+      const dia = parseInt(document.getElementById("dia").value, 10);
+      const bpm = parseInt(document.getElementById("bpm").value, 10);
+
+      if (isNaN(sys) || isNaN(dia) || isNaN(bpm)) {
+        statusDiv.textContent = "Please fill in systolic, diastolic, and heart rate.";
+        return;
       }
 
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
+      const category = classifyBP(sys, dia);
 
-        const date = document.getElementById("date").value || "";
-        const time = document.getElementById("time").value || "";
-        const sys = parseInt(document.getElementById("sys").value, 10);
-        const dia = parseInt(document.getElementById("dia").value, 10);
-        const bpm = parseInt(document.getElementById("bpm").value, 10);
+      const reading = { date, time, sys, dia, bpm, category: category.label };
+      readings.push(reading);
+      saveReadings();
+      renderTable();
 
-        if (isNaN(sys) || isNaN(dia) || isNaN(bpm)) {
-          statusDiv.textContent =
-            "Please fill in systolic, diastolic, and heart rate.";
-          return;
-        }
-
-        const category = classifyBP(sys, dia);
-
-        const reading = { date, time, sys, dia, bpm, category: category.label };
-        readings.push(reading);
-        renderTable();
-
-        statusDiv.innerHTML = `
+      statusDiv.innerHTML = `
         Last added: ${sys}/${dia} mmHg, ${bpm} bpm
         – <span class="tag ${category.className}">${category.label}</span>
       `;
 
-        downloadBtn.disabled = readings.length === 0;
-      });
+      downloadBtn.disabled = readings.length === 0;
+      clearBtn.disabled = readings.length === 0;
+    });
 
-      function renderTable() {
-        tableBody.innerHTML = "";
-        readings.forEach((r, index) => {
-          const cat = classifyBP(r.sys, r.dia);
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+    function renderTable() {
+      tableBody.innerHTML = "";
+      readings.forEach((r, index) => {
+        const cat = classifyBP(r.sys, r.dia);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
           <td>${index + 1}</td>
           <td>${r.date || ""}</td>
           <td>${r.time || ""}</td>
@@ -295,61 +307,64 @@
           <td>${r.bpm}</td>
           <td><span class="tag ${cat.className}">${cat.label}</span></td>
         `;
-          tableBody.appendChild(tr);
-        });
-      }
+        tableBody.appendChild(tr);
+      });
+    }
 
-      function downloadCSV() {
-        if (readings.length === 0) return;
+    function downloadCSV() {
+      if (readings.length === 0) return;
 
-        const header = [
-          "Index",
-          "Date",
-          "Time",
-          "Systolic",
-          "Diastolic",
-          "Heart rate",
-          "Category",
-        ];
-        const rows = readings.map((r, i) => [
-          i + 1,
-          r.date || "",
-          r.time || "",
-          r.sys,
-          r.dia,
-          r.bpm,
-          r.category,
-        ]);
+      const header = ["Index", "Date", "Time", "Systolic", "Diastolic", "Heart rate", "Category"];
+      const rows = readings.map((r, i) => [
+        i + 1,
+        r.date || "",
+        r.time || "",
+        r.sys,
+        r.dia,
+        r.bpm,
+        r.category
+      ]);
 
-        const csvContent = [header, ...rows]
-          .map((row) =>
-            row
-              .map((field) => {
-                const v = String(field ?? "");
-                // Simple CSV escaping
-                if (v.includes(",") || v.includes('"') || v.includes("\n")) {
-                  return `"${v.replace(/"/g, '""')}"`;
-                }
-                return v;
-              })
-              .join(",")
-          )
-          .join("\n");
+      const csvContent = [header, ...rows]
+        .map(row =>
+          row
+            .map(field => {
+              const v = String(field ?? "");
+              if (v.includes(",") || v.includes('"') || v.includes("\n")) {
+                return `"${v.replace(/"/g, '""')}"`;
+              }
+              return v;
+            })
+            .join(",")
+        )
+        .join("\n");
 
-        const blob = new Blob([csvContent], {
-          type: "text/csv;charset=utf-8;",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "blood_pressure_readings.csv";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "blood_pressure_readings.csv";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
 
-      downloadBtn.addEventListener("click", downloadCSV);
-    </script>
-  </body>
+    function clearAllReadings() {
+      if (!confirm("Clear all saved readings?")) return;
+      readings = [];
+      saveReadings();
+      renderTable();
+      statusDiv.textContent = "";
+      downloadBtn.disabled = true;
+      clearBtn.disabled = true;
+    }
+
+    downloadBtn.addEventListener("click", downloadCSV);
+    clearBtn.addEventListener("click", clearAllReadings);
+
+    // Load any existing data on page load
+    loadReadings();
+  </script>
+</body>
 </html>
