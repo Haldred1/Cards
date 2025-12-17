@@ -227,14 +227,17 @@
   </div>
 
   <script>
+    // ===== Online API config =====
+    const API_URL = "https://gclark4811.infinityfreeapp.com/api.php";
+    const API_KEY = "020619837323";
+
     const form = document.getElementById("bpForm");
     const statusDiv = document.getElementById("status");
     const tableBody = document.querySelector("#bpTable tbody");
     const downloadBtn = document.getElementById("downloadBtn");
     const clearBtn = document.getElementById("clearBtn");
 
-    const STORAGE_KEY = "bpReadingsV2"; // new key so it doesn't clash with old format
-    let readings = [];
+    let readings = []; // now comes from server (MySQL)
 
     function setDefaultDateTime() {
       const now = new Date();
@@ -267,61 +270,109 @@
       return { label: "Very high", className: "tag-very-high" };
     }
 
-    function saveReadings() {
+    async function loadReadings() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(readings));
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        readings = Array.isArray(data) ? data : [];
+        renderTable();
+        downloadBtn.disabled = readings.length === 0;
+        clearBtn.disabled = readings.length === 0;
       } catch (e) {
-        console.error("Unable to save readings", e);
+        console.error(e);
+        statusDiv.textContent = "Could not load readings from server.";
+        readings = [];
+        renderTable();
+        downloadBtn.disabled = true;
+        clearBtn.disabled = true;
       }
     }
 
-    function loadReadings() {
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            readings = parsed;
-          }
-        }
-      } catch (e) {
-        console.error("Unable to load readings", e);
-      }
-      renderTable();
-      downloadBtn.disabled = readings.length === 0;
-      clearBtn.disabled = readings.length === 0;
+    async function addReadingToServer(reading) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-KEY": API_KEY
+        },
+        body: JSON.stringify(reading)
+      });
+
+      const out = await res.json();
+      if (!res.ok) throw new Error(out?.error || "Failed to save");
+
+      await loadReadings();
     }
 
-    function deleteEntry(index) {
+    async function deleteEntryById(id) {
       if (!confirm("Delete this entry?")) return;
-      readings.splice(index, 1);
-      saveReadings();
+
+      const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { "X-API-KEY": API_KEY }
+      });
+
+      const out = await res.json();
+      if (!res.ok) {
+        alert(out?.error || "Delete failed");
+        return;
+      }
+
+      statusDiv.textContent = "";
+      await loadReadings();
+    }
+
+    async function clearAllReadings() {
+      if (!confirm("Clear all saved readings?")) return;
+
+      const res = await fetch(`${API_URL}?all=1`, {
+        method: "DELETE",
+        headers: { "X-API-KEY": API_KEY }
+      });
+
+      const out = await res.json();
+      if (!res.ok) {
+        alert(out?.error || "Clear failed");
+        return;
+      }
+
+      readings = [];
       renderTable();
       statusDiv.textContent = "";
-      downloadBtn.disabled = readings.length === 0;
-      clearBtn.disabled = readings.length === 0;
+      downloadBtn.disabled = true;
+      clearBtn.disabled = true;
     }
 
     function renderTable() {
       tableBody.innerHTML = "";
+
+      // API returns newest first; keep your numbering as display order
       readings.forEach((r, index) => {
-        const cat = classifyBP(r.sys, r.dia);
+        // Map DB fields -> existing render expectations
+        const dateIso = r.date_iso || "";
+        const time = r.time_hm || "";
+        const sys = Number(r.systolic);
+        const dia = Number(r.diastolic);
+        const bpm = Number(r.bpm);
+        const feeling = r.feeling || "";
+
+        const cat = classifyBP(sys, dia);
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${index + 1}</td>
-          <td>${r.dateUk || formatDateUK(r.dateIso || r.date || "")}</td>
-          <td>${r.time || ""}</td>
-          <td>${r.sys}</td>
-          <td>${r.dia}</td>
-          <td>${r.bpm}</td>
-          <td>${r.feeling || ""}</td>
+          <td>${formatDateUK(dateIso)}</td>
+          <td>${time}</td>
+          <td>${sys}</td>
+          <td>${dia}</td>
+          <td>${bpm}</td>
+          <td>${feeling}</td>
           <td><span class="tag ${cat.className}">${cat.label}</span></td>
           <td>
             <button
               type="button"
               class="btn-danger"
               style="padding:3px 8px; font-size:0.8rem;"
-              onclick="deleteEntry(${index})"
+              onclick="deleteEntryById(${r.id})"
             >
               Delete
             </button>
@@ -346,16 +397,23 @@
       ];
 
       const rows = readings.map((r, i) => {
-        const dateUk = r.dateUk || formatDateUK(r.dateIso || r.date || "");
+        const dateIso = r.date_iso || "";
+        const time = r.time_hm || "";
+        const sys = Number(r.systolic);
+        const dia = Number(r.diastolic);
+        const bpm = Number(r.bpm);
+        const feeling = r.feeling || "";
+        const dateUk = formatDateUK(dateIso);
+
         return [
           i + 1,
           dateUk,
-          r.time || "",
-          r.sys,
-          r.dia,
-          r.bpm,
-          r.feeling || "",
-          r.category || classifyBP(r.sys, r.dia).label
+          time,
+          sys,
+          dia,
+          bpm,
+          feeling,
+          classifyBP(sys, dia).label
         ];
       });
 
@@ -384,16 +442,6 @@
       URL.revokeObjectURL(url);
     }
 
-    function clearAllReadings() {
-      if (!confirm("Clear all saved readings?")) return;
-      readings = [];
-      saveReadings();
-      renderTable();
-      statusDiv.textContent = "";
-      downloadBtn.disabled = true;
-      clearBtn.disabled = true;
-    }
-
     form.addEventListener("submit", (e) => {
       e.preventDefault();
 
@@ -414,34 +462,33 @@
 
       const reading = {
         dateIso,
-        dateUk,
         time,
         sys,
         dia,
         bpm,
-        feeling,
-        category: category.label
+        feeling
       };
 
-      readings.push(reading);
-      saveReadings();
-      renderTable();
+      addReadingToServer(reading).then(() => {
+        statusDiv.innerHTML = `
+          Last added: ${dateUk || "(no date)"} ${time || ""} – ${sys}/${dia} mmHg, ${bpm} bpm,
+          feeling: ${feeling || "n/a"}
+          – <span class="tag ${category.className}">${category.label}</span>
+        `;
 
-      statusDiv.innerHTML = `
-        Last added: ${dateUk || "(no date)"} ${time || ""} – ${sys}/${dia} mmHg, ${bpm} bpm,
-        feeling: ${feeling || "n/a"}
-        – <span class="tag ${category.className}">${category.label}</span>
-      `;
-
-      downloadBtn.disabled = readings.length === 0;
-      clearBtn.disabled = readings.length === 0;
+        downloadBtn.disabled = false;
+        clearBtn.disabled = false;
+      }).catch((err) => {
+        console.error(err);
+        statusDiv.textContent = "Failed to save reading to server.";
+      });
     });
 
     downloadBtn.addEventListener("click", downloadCSV);
     clearBtn.addEventListener("click", clearAllReadings);
 
-    // expose deleteEntry so the inline onclick works
-    window.deleteEntry = deleteEntry;
+    // expose for inline onclick delete
+    window.deleteEntryById = deleteEntryById;
 
     // init
     setDefaultDateTime();
@@ -449,4 +496,3 @@
   </script>
 </body>
 </html>
-
