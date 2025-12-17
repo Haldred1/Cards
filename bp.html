@@ -229,7 +229,24 @@
   <script>
     // ===== Online API config =====
     const API_URL = "https://lightcyan-louse-528156.hostingersite.com/api.php";
-    const API_KEY = "020619837323";
+
+    // Public view: anyone can load readings (GET).
+    // Admin actions (POST/DELETE): require key (not stored in the code).
+    function getApiKey({ promptIfMissing = true } = {}) {
+      let k = sessionStorage.getItem("BP_API_KEY") || "";
+      if (!k && promptIfMissing) {
+        k = prompt("Enter admin key to enable Add/Delete (leave blank for view-only):") || "";
+        if (k) sessionStorage.setItem("BP_API_KEY", k);
+      }
+      return k;
+    }
+
+    // Optional helper you can run from console: clearApiKey()
+    function clearApiKey() {
+      sessionStorage.removeItem("BP_API_KEY");
+      alert("Admin key cleared. You are now in view-only mode.");
+    }
+    window.clearApiKey = clearApiKey;
 
     const form = document.getElementById("bpForm");
     const statusDiv = document.getElementById("status");
@@ -237,7 +254,7 @@
     const downloadBtn = document.getElementById("downloadBtn");
     const clearBtn = document.getElementById("clearBtn");
 
-    let readings = []; // now comes from server (MySQL)
+    let readings = []; // comes from server (MySQL)
 
     function setDefaultDateTime() {
       const now = new Date();
@@ -289,32 +306,41 @@
     }
 
     async function addReadingToServer(reading) {
+      const key = getApiKey({ promptIfMissing: true });
+      if (!key) throw new Error("No admin key (view-only mode).");
+
       const res = await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-API-KEY": API_KEY
+          "X-API-KEY": key
         },
         body: JSON.stringify(reading)
       });
 
-      const out = await res.json();
-      if (!res.ok) throw new Error(out?.error || "Failed to save");
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out?.error || `Failed to save (HTTP ${res.status})`);
 
       await loadReadings();
     }
 
     async function deleteEntryById(id) {
+      const key = getApiKey({ promptIfMissing: true });
+      if (!key) {
+        alert("View-only mode. Enter admin key to delete.");
+        return;
+      }
+
       if (!confirm("Delete this entry?")) return;
 
       const res = await fetch(`${API_URL}?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
-        headers: { "X-API-KEY": API_KEY }
+        headers: { "X-API-KEY": key }
       });
 
-      const out = await res.json();
+      const out = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(out?.error || "Delete failed");
+        alert(out?.error || `Delete failed (HTTP ${res.status})`);
         return;
       }
 
@@ -323,16 +349,22 @@
     }
 
     async function clearAllReadings() {
+      const key = getApiKey({ promptIfMissing: true });
+      if (!key) {
+        alert("View-only mode. Enter admin key to clear.");
+        return;
+      }
+
       if (!confirm("Clear all saved readings?")) return;
 
       const res = await fetch(`${API_URL}?all=1`, {
         method: "DELETE",
-        headers: { "X-API-KEY": API_KEY }
+        headers: { "X-API-KEY": key }
       });
 
-      const out = await res.json();
+      const out = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(out?.error || "Clear failed");
+        alert(out?.error || `Clear failed (HTTP ${res.status})`);
         return;
       }
 
@@ -346,9 +378,8 @@
     function renderTable() {
       tableBody.innerHTML = "";
 
-      // API returns newest first; keep your numbering as display order
+      // API returns newest first; keep numbering in display order
       readings.forEach((r, index) => {
-        // Map DB fields -> existing render expectations
         const dateIso = r.date_iso || "";
         const time = r.time_hm || "";
         const sys = Number(r.systolic);
@@ -460,14 +491,7 @@
       const category = classifyBP(sys, dia);
       const dateUk = formatDateUK(dateIso);
 
-      const reading = {
-        dateIso,
-        time,
-        sys,
-        dia,
-        bpm,
-        feeling
-      };
+      const reading = { dateIso, time, sys, dia, bpm, feeling };
 
       addReadingToServer(reading).then(() => {
         statusDiv.innerHTML = `
@@ -476,11 +500,11 @@
           – <span class="tag ${category.className}">${category.label}</span>
         `;
 
-        downloadBtn.disabled = false;
-        clearBtn.disabled = false;
+        downloadBtn.disabled = readings.length === 0;
+        clearBtn.disabled = readings.length === 0;
       }).catch((err) => {
         console.error(err);
-        statusDiv.textContent = "Failed to save reading to server.";
+        statusDiv.textContent = `Failed to save reading: ${err?.message || err}`;
       });
     });
 
@@ -496,6 +520,3 @@
   </script>
 </body>
 </html>
-
-
-
