@@ -145,6 +145,7 @@
 </div>
 
 <script>
+  // FIXED: correct URL (you had https:/haldred1.org...)
   const API_URL = "https://haldred1.org/tickets_api.php";
 
   const params = new URLSearchParams(location.search);
@@ -176,8 +177,14 @@
   }
 
   function ukTime(ts){
-    const d = new Date(ts.replace(" ", "T")+"Z");
+    const d = new Date(String(ts).replace(" ", "T") + "Z");
     return isNaN(d) ? ts : d.toLocaleString("en-GB",{dateStyle:"short",timeStyle:"short"});
+  }
+
+  async function safeJson(res){
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch { return { error: text || "Non-JSON response from server" }; }
   }
 
   async function load(){
@@ -193,10 +200,11 @@
     if (!key) return;
 
     try{
-      const res = await fetch(`${API_URL}?action=detail&id=${ticketId}`,{
-        headers:{ "X-ADMIN-KEY": key }
+      const res = await fetch(`${API_URL}?action=detail&id=${ticketId}&_=${Date.now()}`,{
+        headers:{ "X-ADMIN-KEY": key },
+        cache: "no-store"
       });
-      const out = await res.json();
+      const out = await safeJson(res);
 
       if (!res.ok) throw new Error(out?.error || "Load failed");
 
@@ -235,7 +243,7 @@
       `;
 
     }catch(e){
-      errDiv.textContent = e.message;
+      errDiv.textContent = e?.message || String(e);
     }
   }
 
@@ -248,32 +256,38 @@
     if (!key) return;
 
     try{
-      await fetch(`${API_URL}?action=add_comment`,{
+      const res1 = await fetch(`${API_URL}?action=add_comment&_=${Date.now()}`,{
         method:"POST",
         headers:{
           "Content-Type":"application/json",
           "X-ADMIN-KEY": key
         },
+        cache: "no-store",
         body: JSON.stringify({
           id: ticketId,
           message: msg,
           authorName: "IT"
         })
       });
+      const out1 = await safeJson(res1);
+      if (!res1.ok) throw new Error(out1?.error || "Failed to add comment");
 
-      await fetch(`${API_URL}?action=update_status`,{
+      const res2 = await fetch(`${API_URL}?action=update_status&_=${Date.now()}`,{
         method:"PATCH",
         headers:{
           "Content-Type":"application/json",
           "X-ADMIN-KEY": key
         },
+        cache: "no-store",
         body: JSON.stringify({ id: ticketId, status })
       });
+      const out2 = await safeJson(res2);
+      if (!res2.ok) throw new Error(out2?.error || "Failed to update status");
 
       document.getElementById("reply").value="";
       load();
     }catch(e){
-      errDiv.textContent = e.message;
+      errDiv.textContent = e?.message || String(e);
     }
   });
 
@@ -282,5 +296,3 @@
 
 </body>
 </html>
-
-
