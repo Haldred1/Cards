@@ -273,7 +273,7 @@
       if (!res1.ok) throw new Error(out1?.error || "Failed to add comment");
 
       const res2 = await fetch(`${API_URL}?action=update_status&_=${Date.now()}`,{
-        method:"PATCH",
+  method:"POST",
         headers:{
           "Content-Type":"application/json",
           "X-ADMIN-KEY": key
@@ -296,3 +296,4 @@
 
 </body>
 </html>
+
