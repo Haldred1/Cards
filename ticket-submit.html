@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Raise IT Ticket</title>
   <style>
@@ -15,12 +15,12 @@
     button{margin-top:14px;background:#4f46e5;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-size:1rem;cursor:pointer}
     button:disabled{opacity:.6;cursor:not-allowed}
     .msg{margin-top:12px;font-size:.95rem}
+    .linkbox{margin-top:10px;padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Raise an IT Ticket</h1>
-    <p style="margin-top:0;color:#555">Fill in the details below and IT will pick it up.</p>
 
     <form id="ticketForm">
       <div class="row">
@@ -29,7 +29,7 @@
           <input id="name" required />
         </div>
         <div>
-          <label for="email">Your email (optional)</label>
+          <label for="email">Your email (recommended)</label>
           <input id="email" type="email" placeholder="name@company.com"/>
         </div>
       </div>
@@ -44,8 +44,8 @@
           </select>
         </div>
         <div>
-          <label>Submitted</label>
-          <input id="submittedAt" disabled />
+          <label for="subject">Subject *</label>
+          <input id="subject" required placeholder="e.g. Laptop won’t boot"/>
         </div>
       </div>
 
@@ -54,6 +54,7 @@
 
       <button type="submit">Submit ticket</button>
       <div class="msg" id="msg"></div>
+      <div class="linkbox" id="linkbox" style="display:none;"></div>
     </form>
   </div>
 
@@ -61,34 +62,31 @@
     const API_URL = "https://lightcyan-louse-528156.hostingersite.com/tickets_api.php";
     const form = document.getElementById("ticketForm");
     const msg = document.getElementById("msg");
-    const submittedAt = document.getElementById("submittedAt");
-
-    function nowUkString(){
-      const d = new Date();
-      return d.toLocaleString("en-GB", { dateStyle:"short", timeStyle:"short" });
-    }
-    submittedAt.value = nowUkString();
+    const linkbox = document.getElementById("linkbox");
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       msg.textContent = "";
+      linkbox.style.display = "none";
+      linkbox.textContent = "";
 
       const payload = {
         name: document.getElementById("name").value.trim(),
         email: document.getElementById("email").value.trim(),
         priority: document.getElementById("priority").value,
+        subject: document.getElementById("subject").value.trim(),
         description: document.getElementById("description").value.trim()
       };
 
-      if (!payload.name || !payload.description) {
-        msg.textContent = "Please fill in your name and the problem description.";
+      if (!payload.name || !payload.subject || !payload.description) {
+        msg.textContent = "Please fill in name, subject and description.";
         return;
       }
 
       form.querySelector("button").disabled = true;
 
       try {
-        const res = await fetch(API_URL, {
+        const res = await fetch(`${API_URL}?action=create_ticket`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -97,8 +95,15 @@
         if (!res.ok) throw new Error(out?.error || "Submit failed");
 
         msg.textContent = `Ticket submitted successfully. Reference #${out.ticket_id}`;
+
+        const trackUrl = `${location.origin}${location.pathname.replace(/\/[^\/]*$/, "")}/ticket-status.html?token=${encodeURIComponent(out.token)}`;
+        linkbox.style.display = "block";
+        linkbox.innerHTML = `
+          <div><strong>Track / reply link (save this):</strong></div>
+          <div style="word-break:break-all;margin-top:6px;"><a href="${trackUrl}">${trackUrl}</a></div>
+        `;
+
         form.reset();
-        submittedAt.value = nowUkString();
       } catch (err) {
         console.error(err);
         msg.textContent = "Failed to submit ticket: " + (err?.message || err);
