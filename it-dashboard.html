@@ -50,6 +50,16 @@
     .row select{border:1px solid #cbd5e1}
     .msg{margin-top:10px;color:#b91c1c}
 
+    /* Link styling (task name like your work system) */
+    .ticket-link{
+      color: inherit;
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .ticket-link:hover{
+      text-decoration: underline;
+    }
+
     /* Button hover micro-interaction */
     .card button{
       transition: transform .12s ease;
@@ -114,6 +124,7 @@
     filterStatus.addEventListener("change", load);
 
     function ukTime(ts){
+      // expects MySQL "YYYY-MM-DD HH:MM:SS"
       const d = new Date(ts.replace(" ", "T") + "Z"); // rough parse
       if (isNaN(d.getTime())) return ts;
       return d.toLocaleString("en-GB", { dateStyle:"short", timeStyle:"short" });
@@ -125,6 +136,24 @@
       return "p-low";
     }
 
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function makeTicketTitle(t){
+      const subject = (t.subject || "").trim();
+      if (subject) return subject;
+      // fallback: first line of description
+      const d = (t.description || "").trim();
+      if (!d) return "Ticket";
+      return d.split("\n")[0].slice(0, 80);
+    }
+
     async function load(){
       msg.textContent = "";
       grid.innerHTML = "";
@@ -132,9 +161,11 @@
       const key = getAdminKey(true);
       if (!key) { msg.textContent = "No admin key set."; return; }
 
-      const qs = filterStatus.value ? `?status=${encodeURIComponent(filterStatus.value)}` : "";
+      const status = filterStatus.value || "Open";
+      const url = `${API_URL}?action=list&status=${encodeURIComponent(status)}`;
+
       try{
-        const res = await fetch(API_URL + qs, {
+        const res = await fetch(url, {
           headers: { "X-ADMIN-KEY": key }
         });
 
@@ -157,83 +188,50 @@
         tickets.forEach(t => {
           const card = document.createElement("div");
           card.className = `card ${priorityClass(t.priority)}`;
+
+          const title = escapeHtml(makeTicketTitle(t));
+          const subject = escapeHtml((t.subject || "").trim());
+          const requester = escapeHtml(t.requester_name || "");
+          const email = t.requester_email ? ` (${escapeHtml(t.requester_email)})` : "";
+
+          // Link to IT ticket detail page (same folder as this dashboard page)
+          const detailHref = `it-ticket.html?id=${encodeURIComponent(t.id)}`;
+
           card.innerHTML = `
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <div style="font-weight:800;">${escapeHtml(t.description).slice(0,60)}${t.description.length>60?"…":""}</div>
-              <span class="pill">${t.priority}</span>
-              <span class="pill status">${t.status}</span>
+              <div>
+                <a class="ticket-link" href="${detailHref}" title="Open ticket #${t.id}">
+                  ${title}
+                </a>
+              </div>
+              <span class="pill">${escapeHtml(t.priority)}</span>
+              <span class="pill status">${escapeHtml(t.status)}</span>
             </div>
+
             <div class="meta">
               <span><strong>#${t.id}</strong></span>
-              <span>From: ${escapeHtml(t.requester_name)}${t.requester_email ? " ("+escapeHtml(t.requester_email)+")" : ""}</span>
+              <span>From: ${requester}${email}</span>
               <span>Created: ${ukTime(t.created_at)}</span>
             </div>
-            <div class="desc">${escapeHtml(t.description)}</div>
+
+            ${subject ? `<div class="desc" style="margin-top:8px;"><strong>Subject:</strong> ${subject}</div>` : ""}
+
+            <div class="desc">${escapeHtml(t.description || "")}</div>
+
             <div class="row">
-              <select data-id="${t.id}">
-                <option ${t.status==="Open"?"selected":""}>Open</option>
-                <option ${t.status==="In Progress"?"selected":""}>In Progress</option>
-                <option ${t.status==="Closed"?"selected":""}>Closed</option>
-              </select>
-              <button class="secondary" data-save="${t.id}">Update Status</button>
+              <button class="secondary" type="button" onclick="location.href='${detailHref}'">
+                Open ticket
+              </button>
             </div>
           `;
+
           grid.appendChild(card);
         });
 
-        // wire status updates
-        grid.querySelectorAll("button[data-save]").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-save");
-            const sel = grid.querySelector(`select[data-id="${id}"]`);
-            const newStatus = sel.value;
-            await updateStatus(parseInt(id,10), newStatus);
-          });
-        });
-
       } catch(err){
         console.error(err);
         msg.textContent = err?.message || String(err);
       }
-    }
-
-    async function updateStatus(id, status){
-      const key = getAdminKey(true);
-      if (!key) return;
-
-      try{
-        const res = await fetch(API_URL, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            "X-ADMIN-KEY": key
-          },
-          body: JSON.stringify({ id, status })
-        });
-
-        const out = await res.json().catch(()=>null);
-
-        if (res.status === 401){
-          sessionStorage.removeItem("IT_ADMIN_KEY");
-          msg.textContent = "Admin key rejected. Please try again.";
-          return;
-        }
-        if (!res.ok) throw new Error(out?.error || `Update failed (HTTP ${res.status})`);
-
-        await load();
-      } catch(err){
-        console.error(err);
-        msg.textContent = err?.message || String(err);
-      }
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
     }
 
     // init
