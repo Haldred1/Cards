@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>IT Ticket</title>
+
+  <style>
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+      background:#f5f7fb;
+      margin:0;
+      padding:20px;
+      color:#111;
+    }
+    .container{max-width:900px;margin:0 auto}
+    a{color:#4f46e5;text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .card{
+      background:#fff;
+      border-radius:14px;
+      padding:16px 18px;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+      margin-bottom:14px;
+    }
+
+    .header{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .pill{
+      font-size:.75rem;
+      font-weight:700;
+      padding:3px 8px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#3730a3;
+    }
+
+    .p-urgent{background:#fee2e2;color:#991b1b}
+    .p-medium{background:#fef3c7;color:#92400e}
+    .p-low{background:#dcfce7;color:#166534}
+
+    .meta{
+      color:#555;
+      font-size:.9rem;
+      margin-top:6px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .thread{
+      margin-top:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .msg{
+      padding:12px 14px;
+      border-radius:12px;
+      max-width:85%;
+      white-space:pre-wrap;
+      line-height:1.4;
+    }
+
+    .msg.it{
+      background:#eef2ff;
+      align-self:flex-end;
+    }
+
+    .msg.user{
+      background:#f3f4f6;
+      align-self:flex-start;
+    }
+
+    textarea{
+      width:100%;
+      min-height:100px;
+      border-radius:12px;
+      border:1px solid #cbd5e1;
+      padding:10px;
+      font-family:inherit;
+      font-size:.95rem;
+    }
+
+    select,button{
+      padding:8px 12px;
+      border-radius:10px;
+      border:1px solid #cbd5e1;
+      background:#fff;
+      cursor:pointer;
+    }
+
+    button{
+      background:#4f46e5;
+      color:#fff;
+      border:none;
+    }
+
+    button.secondary{
+      background:#e5e7eb;
+      color:#111;
+      border:1px solid #cbd5e1;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+      align-items:center;
+    }
+
+    .error{color:#b91c1c;margin-top:10px}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <a href="it-dashboard.html">← Back to dashboard</a>
+
+  <div id="ticket"></div>
+
+  <div class="card">
+    <h3>Add update</h3>
+    <textarea id="reply" placeholder="Write an update to the user…"></textarea>
+
+    <div class="row">
+      <select id="statusSelect">
+        <option>Open</option>
+        <option>In Progress</option>
+        <option>Closed</option>
+      </select>
+      <button id="sendBtn">Save update</button>
+    </div>
+    <div class="error" id="err"></div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://lightcyan-louse-528156.hostingersite.com/tickets_api.php";
+
+  const params = new URLSearchParams(location.search);
+  const ticketId = parseInt(params.get("id"), 10);
+
+  const ticketDiv = document.getElementById("ticket");
+  const errDiv = document.getElementById("err");
+
+  function getAdminKey(){
+    let k = sessionStorage.getItem("IT_ADMIN_KEY") || "";
+    if (!k){
+      k = prompt("Enter IT admin key:");
+      if (k) sessionStorage.setItem("IT_ADMIN_KEY", k);
+    }
+    return k;
+  }
+
+  function esc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;");
+  }
+
+  function priorityClass(p){
+    if (p==="Urgent") return "p-urgent";
+    if (p==="Medium") return "p-medium";
+    return "p-low";
+  }
+
+  function ukTime(ts){
+    const d = new Date(ts.replace(" ", "T")+"Z");
+    return isNaN(d) ? ts : d.toLocaleString("en-GB",{dateStyle:"short",timeStyle:"short"});
+  }
+
+  async function load(){
+    errDiv.textContent = "";
+    ticketDiv.innerHTML = "";
+
+    if (!ticketId){
+      errDiv.textContent = "Missing ticket ID.";
+      return;
+    }
+
+    const key = getAdminKey();
+    if (!key) return;
+
+    try{
+      const res = await fetch(`${API_URL}?action=detail&id=${ticketId}`,{
+        headers:{ "X-ADMIN-KEY": key }
+      });
+      const out = await res.json();
+
+      if (!res.ok) throw new Error(out?.error || "Load failed");
+
+      const t = out.ticket;
+      const comments = out.comments || [];
+
+      document.getElementById("statusSelect").value = t.status;
+
+      ticketDiv.innerHTML = `
+        <div class="card">
+          <div class="header">
+            <div>
+              <strong>#${t.id}</strong> — ${esc(t.subject || "IT Ticket")}
+            </div>
+            <span class="pill ${priorityClass(t.priority)}">${esc(t.priority)}</span>
+          </div>
+
+          <div class="meta">
+            <span>Status: <strong>${esc(t.status)}</strong></span>
+            <span>From: ${esc(t.requester_name)}${t.requester_email ? " ("+esc(t.requester_email)+")":""}</span>
+            <span>Created: ${ukTime(t.created_at)}</span>
+          </div>
+
+          <div class="thread">
+            ${comments.map(c=>`
+              <div class="msg ${c.author_role==="IT"?"it":"user"}">
+                <strong>${esc(c.author_name)}</strong><br/>
+                ${esc(c.message)}
+                <div style="margin-top:6px;font-size:.75rem;color:#666">
+                  ${ukTime(c.created_at)}
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+
+    }catch(e){
+      errDiv.textContent = e.message;
+    }
+  }
+
+  document.getElementById("sendBtn").addEventListener("click", async ()=>{
+    const msg = document.getElementById("reply").value.trim();
+    const status = document.getElementById("statusSelect").value;
+    if (!msg) return;
+
+    const key = getAdminKey();
+    if (!key) return;
+
+    try{
+      await fetch(`${API_URL}?action=add_comment`,{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "X-ADMIN-KEY": key
+        },
+        body: JSON.stringify({
+          id: ticketId,
+          message: msg,
+          authorName: "IT"
+        })
+      });
+
+      await fetch(`${API_URL}?action=update_status`,{
+        method:"PATCH",
+        headers:{
+          "Content-Type":"application/json",
+          "X-ADMIN-KEY": key
+        },
+        body: JSON.stringify({ id: ticketId, status })
+      });
+
+      document.getElementById("reply").value="";
+      load();
+    }catch(e){
+      errDiv.textContent = e.message;
+    }
+  });
+
+  load();
+</script>
+
+</body>
+</html>
