@@ -6,12 +6,38 @@
 <title>SIPP Login</title>
 
 <style>
-body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:24px}
-.card{max-width:420px;margin:80px auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 10px 22px rgba(0,0,0,.08)}
+body{
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:#f5f7fb;
+  margin:0;
+  padding:24px
+}
+.card{
+  max-width:420px;
+  margin:80px auto;
+  background:#fff;
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 10px 22px rgba(0,0,0,.08)
+}
 h1{margin:0 0 12px}
 label{display:block;margin-top:12px;font-size:.85rem}
-input,button{width:100%;padding:12px;border-radius:12px;border:1px solid #cbd5e1;margin-top:6px}
-button{background:#4f46e5;color:#fff;border:none;font-weight:700;cursor:pointer}
+input,button{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid #cbd5e1;
+  margin-top:6px;
+  box-sizing:border-box
+}
+button{
+  background:#4f46e5;
+  color:#fff;
+  border:none;
+  font-weight:700;
+  cursor:pointer
+}
+button:disabled{opacity:.6;cursor:not-allowed}
 .msg{margin-top:12px;color:#b91c1c}
 </style>
 </head>
@@ -21,10 +47,10 @@ button{background:#4f46e5;color:#fff;border:none;font-weight:700;cursor:pointer}
   <h1>SIPP Login</h1>
 
   <label>Email</label>
-  <input id="email"/>
+  <input id="email" autocomplete="username"/>
 
   <label>Password</label>
-  <input id="password" type="password"/>
+  <input id="password" type="password" autocomplete="current-password"/>
 
   <button id="loginBtn">Login</button>
   <div class="msg" id="msg"></div>
@@ -35,11 +61,21 @@ const API_URL = "https://haldred1.org/sipp_api.php";
 const params = new URLSearchParams(location.search);
 const mode = params.get("mode") || "member"; // member | ops
 
-document.getElementById("loginBtn").onclick = async () => {
+const btn = document.getElementById("loginBtn");
+const msg = document.getElementById("msg");
+
+btn.onclick = async () => {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
-  const msg = document.getElementById("msg");
+
   msg.textContent = "";
+
+  if(!email || !password){
+    msg.textContent = "Email and password required.";
+    return;
+  }
+
+  btn.disabled = true;
 
   try{
     const res = await fetch(`${API_URL}?action=login`,{
@@ -48,20 +84,34 @@ document.getElementById("loginBtn").onclick = async () => {
       body: JSON.stringify({ email, password })
     });
 
-    const out = await res.json();
-    if(!res.ok) throw new Error(out.error || "Login failed");
+    const out = await res.json().catch(()=>null);
+    if(!res.ok) throw new Error(out?.error || "Login failed");
 
-    // 🔐 STORE TOKEN (THIS WAS THE BUG)
-    if(out.role === "member"){
-      localStorage.setItem("SIPP_MEMBER_TOKEN", out.token);
-      location.href = "sipp-member.html";
-    }else{
+    // 🔐 CRITICAL FIX: store correct token + clear the other
+    if(out.role === "ops"){
       localStorage.setItem("SIPP_OPS_TOKEN", out.token);
+      localStorage.removeItem("SIPP_MEMBER_TOKEN");
+
+      if(mode !== "ops"){
+        throw new Error("This account is Ops-only.");
+      }
+
       location.href = "sipp-ops-workflow.html";
+    }else{
+      localStorage.setItem("SIPP_MEMBER_TOKEN", out.token);
+      localStorage.removeItem("SIPP_OPS_TOKEN");
+
+      if(mode !== "member"){
+        throw new Error("This account is Member-only.");
+      }
+
+      location.href = "sipp-member.html";
     }
 
   }catch(e){
     msg.textContent = e.message;
+  }finally{
+    btn.disabled = false;
   }
 };
 </script>
