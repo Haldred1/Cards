@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Create Demand</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
+    .container{max-width:900px;margin:0 auto}
+    a{color:#4f46e5;text-decoration:none}
+    a:hover{text-decoration:underline}
+
+    .card{background:#fff;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:16px 18px;margin-bottom:14px}
+    h1{margin:0 0 8px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:700px){.grid{grid-template-columns:1fr}}
+
+    label{font-size:.9rem;color:#444;display:block;margin:10px 0 6px}
+    input,select,textarea,button{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff}
+    textarea{min-height:90px;resize:vertical}
+    button{border:none;background:#4f46e5;color:#fff;font-weight:800;cursor:pointer}
+    button.secondary{background:#e5e7eb;color:#111;border:1px solid #cbd5e1}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .row button{width:auto}
+    .msg{margin-top:10px;color:#b91c1c}
+    .ok{color:#15803d}
+    .pill{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 9px;border-radius:999px;background:#eef2ff;color:#3730a3}
+    .muted{color:#64748b;font-size:.9rem}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h1 style="margin:0">Create Demand</h1>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <a href="workflow-hub.html">← Back to hub</a>
+        <a href="queue.html">Queues</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:220px">
+          <label for="memberRef">Member Ref (SIPP ID)</label>
+          <input id="memberRef" placeholder="e.g. SIPP123456" />
+        </div>
+        <div style="min-width:160px">
+          <button id="lookupBtn" type="button">Lookup</button>
+        </div>
+      </div>
+
+      <div id="memberBox" style="margin-top:12px;display:none">
+        <div class="pill">Member found</div>
+        <div class="muted" id="memberInfo" style="margin-top:8px"></div>
+      </div>
+
+      <div class="msg" id="lookupMsg"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 6px;font-size:1.1rem">Demand details</h2>
+      <div class="muted">Amounts accept decimals like <code>250.00</code>. Target date is optional unless you choose “Specific date”.</div>
+
+      <div class="grid" style="margin-top:8px">
+        <div>
+          <label for="requestType">Request type</label>
+          <select id="requestType">
+            <option value="INCOME">Income only</option>
+            <option value="TFC">TFC only</option>
+            <option value="BOTH">TFC + Income</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="pattern">Single or Monthly</label>
+          <select id="pattern">
+            <option value="SINGLE">Single</option>
+            <option value="MONTHLY">Monthly</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="timing">Timing</label>
+          <select id="timing">
+            <option value="ASAP">ASAP</option>
+            <option value="DATE">Specific date</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="targetDate">Target date (YYYY-MM-DD)</label>
+          <input id="targetDate" placeholder="2026-01-31" disabled />
+        </div>
+
+        <div>
+          <label for="priority">Priority</label>
+          <select id="priority">
+            <option value="LOW">Low</option>
+            <option value="MEDIUM" selected>Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="summary">Summary (optional)</label>
+          <input id="summary" placeholder="e.g. Retirement drawdown setup" />
+        </div>
+      </div>
+
+      <!-- Income section -->
+      <div id="incomeSection" style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:12px">
+        <div class="grid">
+          <div>
+            <label for="incomeType">Income type</label>
+            <select id="incomeType">
+              <option value="SI" selected>SI</option>
+              <option value="SLIP">SLIP</option>
+            </select>
+          </div>
+          <div>
+            <label for="incomeAmount">Income amount (£)</label>
+            <input id="incomeAmount" placeholder="250.00" />
+          </div>
+          <div>
+            <label for="incomeAmount2">Income amount 2 (£) (optional)</label>
+            <input id="incomeAmount2" placeholder="0.00" />
+          </div>
+          <div class="muted" style="align-self:end">
+            Used for searching “Income + Amount 2” cases.
+          </div>
+        </div>
+      </div>
+
+      <!-- TFC section -->
+      <div id="tfcSection" style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:12px;display:none">
+        <div class="grid">
+          <div>
+            <label for="tfcAmount">TFC amount (£)</label>
+            <input id="tfcAmount" placeholder="5000.00" />
+          </div>
+          <div class="muted" style="align-self:end">
+            TFC = Tax Free Cash (simulation).
+          </div>
+        </div>
+      </div>
+
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" placeholder="Extra instructions for processing…"></textarea>
+
+      <div class="row">
+        <button id="createBtn" type="button">Create demand</button>
+        <button class="secondary" id="clearBtn" type="button">Clear</button>
+      </div>
+
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://haldred1.org/sipp_api.php";
+
+    const lookupMsg = document.getElementById("lookupMsg");
+    const msg = document.getElementById("msg");
+
+    const memberRefEl = document.getElementById("memberRef");
+    const memberBox = document.getElementById("memberBox");
+    const memberInfo = document.getElementById("memberInfo");
+
+    const requestTypeEl = document.getElementById("requestType");
+    const timingEl = document.getElementById("timing");
+    const targetDateEl = document.getElementById("targetDate");
+
+    const incomeSection = document.getElementById("incomeSection");
+    const tfcSection = document.getElementById("tfcSection");
+
+    function token(){ return sessionStorage.getItem("SIPP_TOKEN") || ""; }
+    function requireLogin(){
+      if (!token()){ location.href = "sipp-login.html"; return false; }
+      return true;
+    }
+    function setLookupMsg(t, ok=false){
+      lookupMsg.textContent = t || "";
+      lookupMsg.className = ok ? "msg ok" : "msg";
+    }
+    function setMsg(t, ok=false){
+      msg.textContent = t || "";
+      msg.className = ok ? "msg ok" : "msg";
+    }
+    function esc(s){
+      return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    async function apiGet(url){
+      const res = await fetch(url, { headers: { "Authorization": `Bearer ${token()}` } });
+      const out = await res.json().catch(()=>null);
+      if (res.status === 401){
+        sessionStorage.removeItem("SIPP_TOKEN");
+        location.href = "sipp-login.html";
+        return null;
+      }
+      if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+      return out;
+    }
+    async function apiPost(url, body){
+      const res = await fetch(url, {
+        method:"POST",
+        headers:{
+          "Authorization": `Bearer ${token()}`,
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      const out = await res.json().catch(()=>null);
+      if (res.status === 401){
+        sessionStorage.removeItem("SIPP_TOKEN");
+        location.href = "sipp-login.html";
+        return null;
+      }
+      if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+      return out;
+    }
+
+    let currentMember = null;
+
+    async function lookup(){
+      if (!requireLogin()) return;
+      setLookupMsg("");
+      memberBox.style.display = "none";
+      currentMember = null;
+
+      const mr = memberRefEl.value.trim().toUpperCase();
+      if (!mr){ setLookupMsg("Enter a member ref."); return; }
+
+      try{
+        const out = await apiGet(`${API_URL}?action=member_lookup&member_ref=${encodeURIComponent(mr)}`);
+        if (!out) return;
+
+        currentMember = out;
+        memberBox.style.display = "block";
+        memberInfo.innerHTML =
+          `<strong>${esc(out.full_name)}</strong> · ${esc(out.member_ref)}`
+          + (out.ni_like_id ? ` · NI-like: ${esc(out.ni_like_id)}` : "")
+          + (out.postcode ? ` · ${esc(out.postcode)}` : "");
+        setLookupMsg("Member found.", true);
+      }catch(e){
+        console.error(e);
+        setLookupMsg(e.message || String(e));
+      }
+    }
+
+    function refreshSections(){
+      const rt = requestTypeEl.value;
+      incomeSection.style.display = (rt === "INCOME" || rt === "BOTH") ? "block" : "none";
+      tfcSection.style.display = (rt === "TFC" || rt === "BOTH") ? "block" : "none";
+
+      const timing = timingEl.value;
+      targetDateEl.disabled = timing !== "DATE";
+      if (timing !== "DATE") targetDateEl.value = "";
+    }
+
+    async function createDemand(){
+      if (!requireLogin()) return;
+      setMsg("");
+
+      const member_ref = memberRefEl.value.trim().toUpperCase();
+      if (!member_ref){ setMsg("Member ref required."); return; }
+
+      // Ensure member was looked up (optional but nicer)
+      if (!currentMember || currentMember.member_ref !== member_ref){
+        setMsg("Please lookup the member first.");
+        return;
+      }
+
+      const payload = {
+        member_ref,
+        request_type: requestTypeEl.value,
+        pattern: document.getElementById("pattern").value,
+        timing: timingEl.value,
+        target_date: targetDateEl.value.trim(),
+        priority: document.getElementById("priority").value,
+        summary: document.getElementById("summary").value.trim(),
+        notes: document.getElementById("notes").value.trim()
+      };
+
+      // Income details
+      if (payload.request_type === "INCOME" || payload.request_type === "BOTH"){
+        payload.income_type = document.getElementById("incomeType").value;
+        payload.income_amount = document.getElementById("incomeAmount").value.trim();
+        const a2 = document.getElementById("incomeAmount2").value.trim();
+        if (a2) payload.income_amount2 = a2;
+      }
+
+      // TFC details
+      if (payload.request_type === "TFC" || payload.request_type === "BOTH"){
+        payload.tfc_amount = document.getElementById("tfcAmount").value.trim();
+      }
+
+      try{
+        const out = await apiPost(`${API_URL}?action=create_demand`, payload);
+        if (!out) return;
+
+        setMsg(`Demand created. ID #${out.demand_id}`, true);
+        // jump to detail
+        setTimeout(()=>location.href=`demand-detail.html?id=${encodeURIComponent(out.demand_id)}`, 450);
+      }catch(e){
+        console.error(e);
+        setMsg(e.message || String(e));
+      }
+    }
+
+    document.getElementById("lookupBtn").addEventListener("click", lookup);
+    memberRefEl.addEventListener("keydown", (e)=>{ if (e.key==="Enter") lookup(); });
+
+    document.getElementById("createBtn").addEventListener("click", createDemand);
+    document.getElementById("clearBtn").addEventListener("click", ()=>{
+      setMsg(""); setLookupMsg("");
+      memberRefEl.value=""; currentMember=null; memberBox.style.display="none";
+      document.getElementById("summary").value="";
+      document.getElementById("notes").value="";
+      document.getElementById("incomeAmount").value="";
+      document.getElementById("incomeAmount2").value="";
+      document.getElementById("tfcAmount").value="";
+    });
+
+    requestTypeEl.addEventListener("change", refreshSections);
+    timingEl.addEventListener("change", refreshSections);
+
+    // init
+    requireLogin();
+    refreshSections();
+  </script>
+</body>
+</html>

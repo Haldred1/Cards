@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Demand Detail</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
+    .container{max-width:980px;margin:0 auto}
+    a{color:#4f46e5;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .card{background:#fff;border-radius:16px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:16px 18px;margin-bottom:14px}
+    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:10px}
+    h1{margin:0}
+    .pill{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 9px;border-radius:999px;background:#eef2ff;color:#3730a3}
+    .pill.gray{background:#f1f5f9;color:#334155}
+    .pill.red{background:#fee2e2;color:#991b1b}
+    .pill.amber{background:#fef3c7;color:#92400e}
+    .pill.green{background:#dcfce7;color:#166534}
+    .muted{color:#64748b;font-size:.9rem}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:800px){.grid{grid-template-columns:1fr}}
+    label{font-size:.9rem;color:#444;display:block;margin:10px 0 6px}
+    select,button{padding:9px 10px;border-radius:12px;border:1px solid #cbd5e1;background:#fff}
+    button{border:none;background:#4f46e5;color:#fff;font-weight:800;cursor:pointer}
+    button.secondary{background:#e5e7eb;color:#111;border:1px solid #cbd5e1}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center}
+    .msg{margin-top:10px;color:#b91c1c}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px 6px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:.92rem}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top">
+      <div>
+        <a href="workflow-hub.html">← Back to hub</a> · <a href="queue.html">Queues</a>
+      </div>
+      <button class="secondary" id="refreshBtn" type="button">Refresh</button>
+    </div>
+
+    <div class="card">
+      <h1 id="title">Demand</h1>
+      <div class="muted" id="sub"></div>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="card" id="triageCard" style="display:none">
+      <h2 style="margin:0 0 6px;font-size:1.1rem">Triage</h2>
+      <div class="muted">Create queue tasks (Income/TFC). If you leave both unchecked, backend will route based on request type.</div>
+
+      <div class="grid" style="margin-top:10px">
+        <div>
+          <label>Route to queues</label>
+          <div class="row" style="margin-top:0">
+            <label style="display:flex;gap:8px;align-items:center;margin:0">
+              <input type="checkbox" id="routeIncome" /> Income
+            </label>
+            <label style="display:flex;gap:8px;align-items:center;margin:0">
+              <input type="checkbox" id="routeTfc" /> TFC
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label for="priority">Priority</label>
+          <select id="priority">
+            <option value="">(no change)</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="triageBtn" type="button">Triage & create tasks</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2 style="margin:0 0 6px;font-size:1.1rem">Member</h2>
+        <div id="member"></div>
+      </div>
+
+      <div class="card">
+        <h2 style="margin:0 0 6px;font-size:1.1rem">Request</h2>
+        <div id="req"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 6px;font-size:1.1rem">Tasks</h2>
+      <div class="muted">Tasks appear after triage. Work them via the Queue screen, or assign/complete from there.</div>
+      <div id="tasks"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://haldred1.org/sipp_api.php";
+    const params = new URLSearchParams(location.search);
+    const id = parseInt(params.get("id"), 10);
+
+    const titleEl = document.getElementById("title");
+    const subEl = document.getElementById("sub");
+    const msgEl = document.getElementById("msg");
+    const memberEl = document.getElementById("member");
+    const reqEl = document.getElementById("req");
+    const tasksEl = document.getElementById("tasks");
+    const triageCard = document.getElementById("triageCard");
+
+    function token(){ return sessionStorage.getItem("SIPP_TOKEN") || ""; }
+    function requireLogin(){
+      if (!token()){ location.href = "sipp-login.html"; return false; }
+      return true;
+    }
+    function setMsg(t){ msgEl.textContent = t || ""; }
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+    function ukTime(ts){
+      const d = new Date(String(ts).replace(" ", "T") + "Z");
+      if (isNaN(d.getTime())) return ts;
+      return d.toLocaleString("en-GB", { dateStyle:"short", timeStyle:"short" });
+    }
+
+    function priPill(p){
+      if (p==="HIGH") return `<span class="pill red">HIGH</span>`;
+      if (p==="LOW") return `<span class="pill green">LOW</span>`;
+      return `<span class="pill amber">MEDIUM</span>`;
+    }
+
+    async function apiGet(url){
+      const res = await fetch(url, { headers: { "Authorization": `Bearer ${token()}` } });
+      const out = await res.json().catch(()=>null);
+      if (res.status === 401){
+        sessionStorage.removeItem("SIPP_TOKEN");
+        location.href = "sipp-login.html";
+        return null;
+      }
+      if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+      return out;
+    }
+
+    async function apiPost(url, body){
+      const res = await fetch(url, {
+        method:"POST",
+        headers:{
+          "Authorization": `Bearer ${token()}`,
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      const out = await res.json().catch(()=>null);
+      if (res.status === 401){
+        sessionStorage.removeItem("SIPP_TOKEN");
+        location.href = "sipp-login.html";
+        return null;
+      }
+      if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+      return out;
+    }
+
+    function renderTasks(tasks){
+      if (!tasks || tasks.length === 0){
+        tasksEl.innerHTML = `<div class="muted" style="margin-top:8px">No tasks yet (triage creates tasks).</div>`;
+        return;
+      }
+
+      const rows = tasks.map(t => `
+        <tr>
+          <td>${t.id}</td>
+          <td>${esc(t.queue)}</td>
+          <td>${esc(t.task_type)}</td>
+          <td>${esc(t.status)}</td>
+          <td>${t.assigned_to_ops_id ? esc(t.assigned_to_ops_id) : "—"}</td>
+          <td>${ukTime(t.updated_at)}</td>
+        </tr>
+      `).join("");
+
+      tasksEl.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Task #</th><th>Queue</th><th>Type</th><th>Status</th><th>Assigned</th><th>Updated</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    async function load(){
+      if (!requireLogin()) return;
+      setMsg("");
+
+      if (!id){
+        setMsg("Missing demand id.");
+        return;
+      }
+
+      try{
+        const out = await apiGet(`${API_URL}?action=get_demand&id=${encodeURIComponent(id)}`);
+        if (!out) return;
+
+        const d = out.demand;
+        const income = out.income;
+        const tfc = out.tfc;
+        const tasks = out.tasks || [];
+
+        titleEl.innerHTML = `Demand #${d.id} <span class="pill gray">${esc(d.status)}</span> ${priPill(d.priority)}`;
+        subEl.textContent = `Created ${ukTime(d.created_at)} · Member ${d.member_ref}`;
+
+        memberEl.innerHTML = `
+          <div><strong>${esc(d.full_name)}</strong> (${esc(d.member_ref)})</div>
+          ${d.ni_like_id ? `<div class="muted">NI-like: ${esc(d.ni_like_id)}</div>` : ""}
+          <div class="muted">
+            ${esc([d.address_line1,d.address_line2,d.city,d.postcode].filter(Boolean).join(", "))}
+          </div>
+        `;
+
+        const bits = [];
+        bits.push(`<div><strong>Request type:</strong> ${esc(d.request_type)}</div>`);
+        bits.push(`<div><strong>Pattern:</strong> ${esc(d.pattern)}</div>`);
+        bits.push(`<div><strong>Timing:</strong> ${esc(d.timing)} ${d.target_date ? "(Target: "+esc(d.target_date)+")" : ""}</div>`);
+        if (d.summary) bits.push(`<div><strong>Summary:</strong> ${esc(d.summary)}</div>`);
+        if (d.notes) bits.push(`<div><strong>Notes:</strong><br><span style="white-space:pre-wrap">${esc(d.notes)}</span></div>`);
+
+        if (income){
+          bits.push(`<hr style="border:none;border-top:1px solid #e5e7eb;margin:10px 0">`);
+          bits.push(`<div><strong>Income:</strong> Type ${esc(income.income_type)} · £${esc(income.income_amount)}</div>`);
+          if (income.income_amount2) bits.push(`<div><strong>Income 2:</strong> £${esc(income.income_amount2)}</div>`);
+        }
+        if (tfc){
+          bits.push(`<hr style="border:none;border-top:1px solid #e5e7eb;margin:10px 0">`);
+          bits.push(`<div><strong>TFC:</strong> £${esc(tfc.tfc_amount)}</div>`);
+        }
+
+        reqEl.innerHTML = bits.join("");
+
+        renderTasks(tasks);
+
+        // Show triage card only if NEW or TRIAGED (you can keep it available always if you want)
+        triageCard.style.display = (d.status === "NEW" || d.status === "TRIAGED") ? "block" : "none";
+
+        // Sensible default checks based on request_type
+        const rtIncome = (d.request_type === "INCOME" || d.request_type === "BOTH");
+        const rtTfc = (d.request_type === "TFC" || d.request_type === "BOTH");
+        document.getElementById("routeIncome").checked = rtIncome;
+        document.getElementById("routeTfc").checked = rtTfc;
+
+      }catch(e){
+        console.error(e);
+        setMsg(e.message || String(e));
+      }
+    }
+
+    document.getElementById("triageBtn").addEventListener("click", async ()=>{
+      const route_income = document.getElementById("routeIncome").checked;
+      const route_tfc = document.getElementById("routeTfc").checked;
+      const priority = document.getElementById("priority").value;
+
+      if (!confirm("Create tasks and triage this demand?")) return;
+
+      try{
+        setMsg("");
+        document.getElementById("triageBtn").disabled = true;
+
+        const payload = { demand_id: id, route_income, route_tfc };
+        if (priority) payload.priority = priority;
+
+        await apiPost(`${API_URL}?action=triage_demand`, payload);
+        await load();
+      }catch(e){
+        console.error(e);
+        setMsg(e.message || String(e));
+      }finally{
+        document.getElementById("triageBtn").disabled = false;
+      }
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", load);
+    document.addEventListener("visibilitychange", ()=>{ if (!document.hidden) load(); });
+
+    // init
+    requireLogin();
+    load();
+  </script>
+</body>
+</html>

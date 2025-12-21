@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Queues</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
+    .container{max-width:1100px;margin:0 auto}
+    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+    h1{margin:0}
+    a{color:#4f46e5;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    select,input,button{padding:9px 10px;border-radius:12px;border:1px solid #cbd5e1;background:#fff}
+    input{min-width:220px}
+    button{border:none;background:#4f46e5;color:#fff;font-weight:800;cursor:pointer}
+    button.secondary{background:#e5e7eb;color:#111;border:1px solid #cbd5e1}
+    .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+    .meta{color:#64748b;font-size:.9rem}
+    .msg{margin:8px 0;color:#b91c1c}
+    .grid{display:grid;gap:12px}
+
+    .card{
+      background:#fff;border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.08);
+      padding:14px 16px;border-left:10px solid #94a3b8;
+      transition: transform .16s ease, box-shadow .16s ease, border-left-width .16s ease;
+    }
+    .card:hover{transform: translateY(-3px);box-shadow:0 18px 32px rgba(0,0,0,.14);border-left-width:14px}
+    .p-high{border-left-color:#ef4444}
+    .p-medium{border-left-color:#f59e0b}
+    .p-low{border-left-color:#22c55e}
+
+    .head{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .title{font-weight:900}
+    .pill{font-size:.78rem;font-weight:800;padding:3px 9px;border-radius:999px;background:#eef2ff;color:#3730a3}
+    .pill.gray{background:#f1f5f9;color:#334155}
+    .pill.red{background:#fee2e2;color:#991b1b}
+    .pill.amber{background:#fef3c7;color:#92400e}
+    .pill.green{background:#dcfce7;color:#166534}
+    .line{color:#555;font-size:.92rem;margin-top:8px;white-space:pre-wrap}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+
+    @media (prefers-reduced-motion: reduce){
+      .card{transition:none}
+      .card:hover{transform:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top">
+      <h1>Queues</h1>
+      <div class="controls">
+        <a href="workflow-hub.html">Workflow Hub</a>
+        <a href="create-demand.html">Create Demand</a>
+        <button class="secondary" id="logoutBtn" type="button">Logout</button>
+      </div>
+    </div>
+
+    <div class="bar">
+      <select id="queue">
+        <option value="INCOME" selected>Income queue</option>
+        <option value="TFC">TFC queue</option>
+      </select>
+
+      <select id="status">
+        <option value="OPEN" selected>OPEN</option>
+        <option value="ASSIGNED">ASSIGNED</option>
+        <option value="DONE">DONE</option>
+        <option value="BLOCKED">BLOCKED</option>
+      </select>
+
+      <select id="assigned">
+        <option value="all" selected>All</option>
+        <option value="me">Me</option>
+        <option value="unassigned">Unassigned</option>
+      </select>
+
+      <select id="incomeType">
+        <option value="" selected>Income type: Any</option>
+        <option value="SI">SI</option>
+        <option value="SLIP">SLIP</option>
+      </select>
+
+      <input id="search" placeholder="Search member ref / demand id / name"/>
+
+      <button id="refreshBtn">Refresh</button>
+      <span class="meta" id="lastUpdated"></span>
+    </div>
+
+    <div class="msg" id="msg"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const API_URL = "https://haldred1.org/sipp_api.php";
+    const grid = document.getElementById("grid");
+    const msg = document.getElementById("msg");
+    const lastUpdated = document.getElementById("lastUpdated");
+
+    const queueEl = document.getElementById("queue");
+    const statusEl = document.getElementById("status");
+    const assignedEl = document.getElementById("assigned");
+    const incomeTypeEl = document.getElementById("incomeType");
+    const searchEl = document.getElementById("search");
+
+    let timer = null;
+
+    function token(){ return sessionStorage.getItem("SIPP_TOKEN") || ""; }
+    function requireLogin(){
+      if (!token()){ location.href = "sipp-login.html"; return false; }
+      return true;
+    }
+    function setMsg(t){ msg.textContent = t || ""; }
+
+    function esc(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+
+    function ukTime(ts){
+      const d = new Date(String(ts).replace(" ", "T") + "Z");
+      if (isNaN(d.getTime())) return ts;
+      return d.toLocaleString("en-GB", { dateStyle:"short", timeStyle:"short" });
+    }
+
+    function priClass(p){
+      if (p==="HIGH") return "p-high";
+      if (p==="LOW") return "p-low";
+      return "p-medium";
+    }
+    function priPill(p){
+      if (p==="HIGH") return `<span class="pill red">HIGH</span>`;
+      if (p==="LOW") return `<span class="pill green">LOW</span>`;
+      return `<span class="pill amber">MEDIUM</span>`;
+    }
+
+    async function apiGet(url){
+      const res = await fetch(url, { headers: { "Authorization": `Bearer ${token()}` } });
+      const out = await res.json().catch(()=>null);
+      if (res.status === 401){
+        sessionStorage.removeItem("SIPP_TOKEN");
+        location.href = "sipp-login.html";
+        return null;
+      }
+      if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+      return out;
+    }
+    async function apiPost(url, body){
+      const res = await fetch(url, {
+        method:"POST",
+        headers:{
+          "Authorization": `Bearer ${token()}`,
+          "Content-Type":"application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      const out = await res.json().catch(()=>null);
+      if (res.status === 401){
+        sessionStorage.removeItem("SIPP_TOKEN");
+        location.href = "sipp-login.html";
+        return null;
+      }
+      if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+      return out;
+    }
+
+    function buildUrl(){
+      const params = new URLSearchParams();
+      params.set("action","list_tasks");
+      params.set("queue", queueEl.value);
+      params.set("status", statusEl.value);
+      params.set("assigned", assignedEl.value);
+
+      const it = incomeTypeEl.value;
+      if (queueEl.value === "INCOME" && it) params.set("income_type", it);
+
+      const s = searchEl.value.trim();
+      if (s) params.set("search", s);
+
+      return `${API_URL}?${params.toString()}`;
+    }
+
+    function render(rows){
+      grid.innerHTML = "";
+      if (!rows || rows.length === 0){
+        grid.innerHTML = `<div style="color:#555">No tasks found.</div>`;
+        return;
+      }
+
+      rows.forEach(r => {
+        const card = document.createElement("div");
+        card.className = `card ${priClass(r.priority)}`;
+
+        const detailHref = `demand-detail.html?id=${encodeURIComponent(r.demand_id)}`;
+        const bits = [];
+        bits.push(`Member: ${esc(r.full_name)} (${esc(r.member_ref)})`);
+        bits.push(`Demand #${r.demand_id} · Task #${r.task_id}`);
+        bits.push(`Task: ${esc(r.task_type)} · ${esc(r.task_status)}`);
+        bits.push(`Created: ${ukTime(r.task_created_at)}`);
+        if (r.request_type !== "TFC" && r.income_amount){
+          bits.push(`Income: £${esc(r.income_amount)} (${esc(r.income_type || "SI")})`);
+          if (r.income_amount2) bits.push(`Income 2: £${esc(r.income_amount2)}`);
+        }
+        if (r.request_type !== "INCOME" && r.tfc_amount){
+          bits.push(`TFC: £${esc(r.tfc_amount)}`);
+        }
+
+        const assignedText = r.assigned_to_ops_id ? `Assigned: ${r.assigned_to_ops_id}` : "Unassigned";
+
+        card.innerHTML = `
+          <div class="head">
+            <div class="title">
+              <a href="${detailHref}" style="color:inherit;text-decoration:none;font-weight:900">
+                ${esc(r.member_ref)} — Demand #${r.demand_id}
+              </a>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="pill gray">${esc(r.queue)}</span>
+              <span class="pill gray">${esc(r.task_status)}</span>
+              ${priPill(r.priority)}
+            </div>
+          </div>
+
+          <div class="line">${esc(bits.join(" · "))}</div>
+          <div class="line" style="margin-top:6px;color:#64748b">${esc(assignedText)}</div>
+
+          <div class="row">
+            <button class="secondary" type="button" onclick="location.href='${detailHref}'">Open demand</button>
+            ${r.task_status === "OPEN" && !r.assigned_to_ops_id ? `<button type="button" data-assign="${r.task_id}">Assign to me</button>` : ""}
+            ${r.task_status === "ASSIGNED" ? `<button type="button" data-complete="${r.task_id}">Complete</button>` : ""}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+
+      // Assign
+      grid.querySelectorAll("button[data-assign]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const taskId = parseInt(btn.getAttribute("data-assign"),10);
+          try{
+            btn.disabled = true;
+            await apiPost(`${API_URL}?action=assign_task`, { task_id: taskId });
+            await load();
+          }catch(e){
+            console.error(e);
+            setMsg(e.message || String(e));
+          }finally{
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // Complete
+      grid.querySelectorAll("button[data-complete]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const taskId = parseInt(btn.getAttribute("data-complete"),10);
+          const notes = prompt("Outcome notes (optional):") || "";
+          try{
+            btn.disabled = true;
+            await apiPost(`${API_URL}?action=complete_task`, { task_id: taskId, outcome_notes: notes });
+            await load();
+          }catch(e){
+            console.error(e);
+            setMsg(e.message || String(e));
+          }finally{
+            btn.disabled = false;
+          }
+        });
+      });
+    }
+
+    async function load(){
+      if (!requireLogin()) return;
+      setMsg("");
+      lastUpdated.textContent = "Loading…";
+
+      try{
+        const rows = await apiGet(buildUrl());
+        if (rows === null) return;
+        render(rows);
+        lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString("en-GB")}`;
+      }catch(e){
+        console.error(e);
+        setMsg(e.message || String(e));
+        lastUpdated.textContent = "";
+      }
+    }
+
+    function startAutoRefresh(){
+      if (timer) clearInterval(timer);
+      timer = setInterval(load, 30000);
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", load);
+    [queueEl, statusEl, assignedEl, incomeTypeEl].forEach(el => el.addEventListener("change", load));
+    searchEl.addEventListener("keydown", (e)=>{ if (e.key==="Enter") load(); });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) load();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", ()=>{
+      sessionStorage.removeItem("SIPP_TOKEN");
+      sessionStorage.removeItem("SIPP_ROLE");
+      sessionStorage.removeItem("SIPP_EXPIRES");
+      location.href = "sipp-login.html";
+    });
+
+    // init
+    requireLogin();
+    load();
+    startAutoRefresh();
+  </script>
+</body>
+</html>
