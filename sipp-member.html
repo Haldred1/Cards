@@ -1,411 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Member Platform</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
-    .container{max-width:1100px;margin:0 auto}
-    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
-    .card{background:#fff;border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.08);padding:16px 16px;margin:12px 0}
-    a{color:#4f46e5;text-decoration:none}
-    a:hover{text-decoration:underline}
-    .pill{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:999px;background:#eef2ff;color:#3730a3}
-    .muted{color:#6b7280}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
-    label{font-size:.85rem;color:#444;display:block;margin-bottom:6px}
-    input,select,button,textarea{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;font-size:1rem}
-    textarea{min-height:88px;font-family:inherit}
-    button{border:none;background:#4f46e5;color:#fff;font-weight:800;cursor:pointer}
-    button.secondary{background:#e5e7eb;color:#111;border:1px solid #cbd5e1}
-    table{width:100%;border-collapse:collapse;font-size:.92rem}
-    th,td{padding:10px 8px;border-bottom:1px solid #e5e7eb;text-align:left}
-    th{color:#374151;background:#f3f4f6}
-    .msg{margin-top:10px;color:#b91c1c}
-    .ok{color:#15803d}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .right{margin-left:auto}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SIPP Member Sign Up</title>
+
+<style>
+body{
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:#f5f7fb;
+  margin:0;
+  padding:20px;
+}
+.container{max-width:900px;margin:0 auto}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 10px 22px rgba(0,0,0,.08);
+}
+h1,h2{margin-top:0}
+label{display:block;font-weight:600;margin-top:12px}
+input{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #cbd5e1;
+}
+button{
+  margin-top:20px;
+  padding:12px 18px;
+  border-radius:12px;
+  border:none;
+  background:#4f46e5;
+  color:#fff;
+  font-size:1rem;
+  cursor:pointer;
+}
+.error{color:#b91c1c;margin-top:10px}
+</style>
 </head>
+
 <body>
 <div class="container">
-  <div class="top">
-    <div>
-      <div class="row">
-        <a href="sipp-home.html">← Home</a>
-        <span class="pill">Member</span>
-      </div>
-      <h1 style="margin:6px 0 0">Member Platform</h1>
-      <div class="muted" id="who"></div>
-    </div>
-    <div class="row">
-      <button class="secondary" id="refreshBtn" type="button">Refresh</button>
-      <button class="secondary" id="logoutBtn" type="button">Logout</button>
-    </div>
-  </div>
+<h1>Create SIPP Account</h1>
 
-  <div class="grid">
-    <div class="card">
-      <h3 style="margin:0 0 8px">Account</h3>
-      <div class="muted">Cash balance</div>
-      <div style="font-size:2rem;font-weight:900;margin-top:4px" id="cash">—</div>
-      <div class="muted" style="margin-top:6px" id="sippRef"></div>
-    </div>
+<form id="signup">
 
-    <div class="card">
-      <h3 style="margin:0 0 8px">Deposit demo cash</h3>
-      <label>Amount (£)</label>
-      <input id="depositAmount" placeholder="100.00"/>
-      <div class="row" style="margin-top:10px">
-        <button id="depositBtn" type="button">Deposit</button>
-      </div>
-      <div class="msg" id="depositMsg"></div>
-    </div>
+<div class="card">
+<h2>Member details</h2>
+<label>Email</label><input id="email" required>
+<label>Password</label><input id="password" type="password" required>
+<label>Full name</label><input id="full">
+<label>NI number</label><input id="ni">
+<label>Address line 1</label><input id="a1">
+<label>Address line 2</label><input id="a2">
+<label>City</label><input id="city">
+<label>Postcode</label><input id="pc">
+</div>
 
-    <div class="card">
-      <h3 style="margin:0 0 8px">Invest (Buy)</h3>
-      <label>Investment</label>
-      <select id="buyInv"></select>
-      <label style="margin-top:10px">Amount (£)</label>
-      <input id="buyAmount" placeholder="50.00"/>
-      <div class="row" style="margin-top:10px">
-        <button id="buyBtn" type="button">Buy</button>
-      </div>
-      <div class="msg" id="buyMsg"></div>
-    </div>
+<div class="card">
+<h2>Adviser firm</h2>
+<label>Firm name</label><input id="firm">
+<label>Address line 1</label><input id="fa1">
+<label>Address line 2</label><input id="fa2">
+<label>City</label><input id="fcity">
+<label>Postcode</label><input id="fpc">
+<label>Contact name</label><input id="fname">
+<label>Contact email</label><input id="femail">
+<label>Contact phone</label><input id="fphone">
+</div>
 
-    <div class="card">
-      <h3 style="margin:0 0 8px">Disinvest (Sell)</h3>
-      <label>Holding</label>
-      <select id="sellHolding"></select>
-      <label style="margin-top:10px">Units</label>
-      <input id="sellUnits" placeholder="0.500000"/>
-      <div class="row" style="margin-top:10px">
-        <button id="sellBtn" type="button">Sell</button>
-      </div>
-      <div class="msg" id="sellMsg"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 8px">Holdings</h3>
-    <div class="muted" style="margin-bottom:10px">Your current fund units (demo pricing)</div>
-    <div style="overflow:auto">
-      <table>
-        <thead>
-          <tr>
-            <th>Code</th><th>Name</th><th>Risk</th><th>Price (pennies)</th><th>Units</th>
-          </tr>
-        </thead>
-        <tbody id="holdingsBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="grid">
-    <div class="card">
-      <h3 style="margin:0 0 8px">Request payout</h3>
-      <div class="muted" style="margin-bottom:10px">Income / TFC (tax-free cash), single or monthly, ASAP or dated.</div>
-
-      <label>Type</label>
-      <select id="reqType">
-        <option>Income</option>
-        <option>TFC</option>
-        <option>Income+TFC</option>
-      </select>
-
-      <label style="margin-top:10px">Frequency</label>
-      <select id="reqFreq">
-        <option>Single</option>
-        <option>Monthly</option>
-      </select>
-
-      <label style="margin-top:10px">Payout date (optional, YYYY-MM-DD)</label>
-      <input id="reqDate" placeholder="Leave blank = ASAP"/>
-
-      <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
-        <div>
-          <label>Income amount (£)</label>
-          <input id="reqIncome" placeholder="0.00"/>
-        </div>
-        <div>
-          <label>TFC amount (£)</label>
-          <input id="reqTfc" placeholder="0.00"/>
-        </div>
-      </div>
-
-      <div style="margin-top:10px">
-        <button id="reqBtn" type="button">Submit request</button>
-      </div>
-      <div class="msg" id="reqMsg"></div>
-    </div>
-
-    <div class="card">
-      <h3 style="margin:0 0 8px">My payout requests</h3>
-      <div class="muted" style="margin-bottom:10px">Latest 200 requests.</div>
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th><th>Type</th><th>Freq</th><th>Date</th><th>Income</th><th>TFC</th><th>Status</th><th>Created</th>
-            </tr>
-          </thead>
-          <tbody id="reqBody"></tbody>
-        </table>
-      </div>
-      <div class="msg" id="histMsg"></div>
-    </div>
-  </div>
+<button>Create account</button>
+<div class="error" id="err"></div>
+</form>
 </div>
 
 <script>
-  const API_URL = "https://haldred1.org/sipp_api.php";
-  const TOKEN_KEY = "SIPP_MEMBER_TOKEN";
+const API = "https://haldred1.org/sipp_api.php";
 
-  const who = document.getElementById("who");
-  const cashEl = document.getElementById("cash");
-  const sippRefEl = document.getElementById("sippRef");
+document.getElementById("signup").addEventListener("submit", async e=>{
+  e.preventDefault();
+  err.textContent="";
 
-  const holdingsBody = document.getElementById("holdingsBody");
-  const reqBody = document.getElementById("reqBody");
+  const body = {
+    email: email.value,
+    password: password.value,
+    full_name: full.value,
+    ni_number: ni.value,
+    address_line1: a1.value,
+    address_line2: a2.value,
+    city: city.value,
+    postcode: pc.value,
 
-  const buyInv = document.getElementById("buyInv");
-  const sellHolding = document.getElementById("sellHolding");
+    adviser_firm_name: firm.value,
+    adviser_address_line1: fa1.value,
+    adviser_address_line2: fa2.value,
+    adviser_city: fcity.value,
+    adviser_postcode: fpc.value,
+    adviser_contact_name: fname.value,
+    adviser_contact_email: femail.value,
+    adviser_contact_phone: fphone.value
+  };
 
-  function token(){
-    return localStorage.getItem(TOKEN_KEY) || "";
-  }
-  function authHeaders(){
-    const t = token();
-    return t ? { "Authorization": "Bearer " + t } : {};
-  }
-  function money(n){ return "£" + String(n ?? "0.00"); }
-
-  function setMsg(el, text, ok=false){
-    el.className = "msg" + (ok ? " ok" : "");
-    el.textContent = text || "";
-  }
-
-  document.getElementById("logoutBtn").addEventListener("click", () => {
-    localStorage.removeItem(TOKEN_KEY);
-    location.href = "sipp-login.html?mode=member";
-  });
-
-  document.getElementById("refreshBtn").addEventListener("click", () => loadAll());
-
-  async function apiGet(action){
-    const res = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, {
-      headers: { ...authHeaders() }
+  try{
+    const r = await fetch(API+"?action=member_register",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body)
     });
-    const out = await res.json().catch(()=>null);
-    if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
-    return out;
+    const out = await r.json();
+    if(!r.ok) throw new Error(out.error);
+    alert("Account created. SIPP ref: "+out.sipp_ref);
+    location.href="sipp-login.html";
+  }catch(e){
+    err.textContent=e.message;
   }
-
-  async function apiPost(action, payload){
-    const res = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`, {
-      method: "POST",
-      headers: { "Content-Type":"application/json", ...authHeaders() },
-      body: JSON.stringify(payload || {})
-    });
-    const out = await res.json().catch(()=>null);
-    if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
-    return out;
-  }
-
-  async function loadMe(){
-    const out = await apiGet("me");
-    const u = out.user;
-    const m = out.member;
-    const a = out.account;
-
-    if (!u || u.role !== "member") {
-      localStorage.removeItem(TOKEN_KEY);
-      location.href = "sipp-login.html?mode=member";
-      return;
-    }
-
-    who.textContent = `${u.email} — role: ${u.role}`;
-    cashEl.textContent = money(a?.cash_balance || "0.00");
-    sippRefEl.textContent = m?.sipp_ref ? `SIPP ref: ${m.sipp_ref}` : "";
-  }
-
-  async function loadInvestments(){
-    const invs = await apiGet("investments");
-    buyInv.innerHTML = "";
-    (invs || []).forEach(i => {
-      const opt = document.createElement("option");
-      opt.value = i.id;
-      opt.textContent = `${i.code} — ${i.name} (${i.risk})`;
-      buyInv.appendChild(opt);
-    });
-  }
-
-  async function loadPortfolio(){
-    const out = await apiGet("my_portfolio");
-    cashEl.textContent = money(out.cash_balance);
-
-    // holdings table
-    holdingsBody.innerHTML = "";
-    (out.holdings || []).forEach(h => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${h.code}</td>
-        <td>${h.name}</td>
-        <td>${h.risk}</td>
-        <td>${h.price_pennies}</td>
-        <td>${Number(h.units).toFixed(6)}</td>
-      `;
-      holdingsBody.appendChild(tr);
-    });
-
-    // holdings dropdown for sell
-    sellHolding.innerHTML = "";
-    const hs = out.holdings || [];
-    if (hs.length === 0){
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "No holdings yet";
-      sellHolding.appendChild(opt);
-      sellHolding.disabled = true;
-    } else {
-      sellHolding.disabled = false;
-      hs.forEach(h => {
-        const opt = document.createElement("option");
-        opt.value = h.investment_id;
-        opt.textContent = `${h.code} — ${Number(h.units).toFixed(6)} units`;
-        sellHolding.appendChild(opt);
-      });
-    }
-  }
-
-  async function loadMyRequests(){
-    const rows = await apiGet("my_payout_requests");
-    reqBody.innerHTML = "";
-    (rows || []).forEach(r => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${r.id}</td>
-        <td>${r.request_type}</td>
-        <td>${r.frequency}</td>
-        <td>${r.payout_date || "ASAP"}</td>
-        <td>${money(r.income_amount)}</td>
-        <td>${money(r.tfc_amount)}</td>
-        <td><strong>${r.status}</strong></td>
-        <td>${r.created_at}</td>
-      `;
-      reqBody.appendChild(tr);
-    });
-  }
-
-  async function loadAll(){
-    // clear messages
-    setMsg(document.getElementById("depositMsg"), "");
-    setMsg(document.getElementById("buyMsg"), "");
-    setMsg(document.getElementById("sellMsg"), "");
-    setMsg(document.getElementById("reqMsg"), "");
-    setMsg(document.getElementById("histMsg"), "");
-
-    await loadMe();
-    await loadInvestments();
-    await loadPortfolio();
-    await loadMyRequests();
-  }
-
-  document.getElementById("depositBtn").addEventListener("click", async () => {
-    const el = document.getElementById("depositMsg");
-    setMsg(el, "");
-    const amount = (document.getElementById("depositAmount").value || "").trim();
-    if (!amount) { setMsg(el, "Enter an amount."); return; }
-
-    try{
-      await apiPost("deposit", { amount });
-      setMsg(el, "Deposit complete.", true);
-      document.getElementById("depositAmount").value = "";
-      await loadPortfolio();
-    }catch(e){
-      setMsg(el, e?.message || String(e));
-    }
-  });
-
-  document.getElementById("buyBtn").addEventListener("click", async () => {
-    const el = document.getElementById("buyMsg");
-    setMsg(el, "");
-    const investment_id = parseInt(buyInv.value, 10);
-    const amount = (document.getElementById("buyAmount").value || "").trim();
-    if (!investment_id || !amount) { setMsg(el, "Select an investment + amount."); return; }
-
-    try{
-      const out = await apiPost("buy", { investment_id, amount });
-      setMsg(el, `Buy complete. Units added: ${Number(out.units).toFixed(6)}`, true);
-      document.getElementById("buyAmount").value = "";
-      await loadPortfolio();
-    }catch(e){
-      setMsg(el, e?.message || String(e));
-    }
-  });
-
-  document.getElementById("sellBtn").addEventListener("click", async () => {
-    const el = document.getElementById("sellMsg");
-    setMsg(el, "");
-    const investment_id = parseInt(sellHolding.value, 10);
-    const units = parseFloat((document.getElementById("sellUnits").value || "").trim());
-    if (!investment_id || !units || units <= 0) { setMsg(el, "Choose a holding + enter units."); return; }
-
-    try{
-      const out = await apiPost("sell", { investment_id, units });
-      setMsg(el, `Sell complete. Proceeds: £${out.proceeds}`, true);
-      document.getElementById("sellUnits").value = "";
-      await loadPortfolio();
-    }catch(e){
-      setMsg(el, e?.message || String(e));
-    }
-  });
-
-  document.getElementById("reqBtn").addEventListener("click", async () => {
-    const el = document.getElementById("reqMsg");
-    setMsg(el, "");
-
-    const request_type = document.getElementById("reqType").value;
-    const frequency = document.getElementById("reqFreq").value;
-    const payout_date = (document.getElementById("reqDate").value || "").trim();
-
-    const income_amount = (document.getElementById("reqIncome").value || "").trim();
-    const tfc_amount = (document.getElementById("reqTfc").value || "").trim();
-
-    try{
-      const out = await apiPost("create_payout_request", {
-        request_type,
-        frequency,
-        payout_date,
-        income_amount,
-        tfc_amount
-      });
-      setMsg(el, `Request submitted. ID: ${out.request_id}`, true);
-
-      document.getElementById("reqIncome").value = "";
-      document.getElementById("reqTfc").value = "";
-      document.getElementById("reqDate").value = "";
-
-      await loadMyRequests();
-    }catch(e){
-      setMsg(el, e?.message || String(e));
-    }
-  });
-
-  // init
-  (async () => {
-    const t = token();
-    if (!t) { location.href = "sipp-login.html?mode=member"; return; }
-    try{
-      await loadAll();
-    }catch(e){
-      console.error(e);
-      localStorage.removeItem(TOKEN_KEY);
-      location.href = "sipp-login.html?mode=member";
-    }
-  })();
+});
 </script>
 </body>
 </html>
