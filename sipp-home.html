@@ -3,70 +3,183 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>SIPP Demo Platform</title>
+  <title>SIPP Platform</title>
+
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
-    .container{max-width:980px;margin:0 auto}
-    .card{background:#fff;border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.08);padding:18px 18px;margin:14px 0}
-    h1{margin:0 0 6px}
-    .sub{color:#555;margin:0 0 16px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    a.btn{display:inline-flex;justify-content:center;align-items:center;padding:10px 12px;border-radius:12px;text-decoration:none;font-weight:700}
-    .primary{background:#4f46e5;color:#fff}
-    .secondary{background:#e5e7eb;color:#111}
-    .pill{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:999px;background:#eef2ff;color:#3730a3}
-    .muted{color:#6b7280;font-size:.9rem}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .warn{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:10px 12px;border-radius:12px}
+    * { box-sizing: border-box; }
+
+    body{
+      font-family: system-ui,-apple-system,Segoe UI,sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 24px;
+      color: #111;
+    }
+
+    .container{
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1{
+      margin: 0 0 18px;
+      font-size: 1.8rem;
+    }
+
+    .grid{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .card{
+      background: #fff;
+      border-radius: 18px;
+      padding: 22px 24px;
+      box-shadow: 0 12px 26px rgba(0,0,0,.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .card h2{
+      margin: 0 0 6px;
+      font-size: 1.3rem;
+    }
+
+    .card p{
+      margin: 0 0 16px;
+      color: #555;
+      line-height: 1.45;
+      font-size: .95rem;
+    }
+
+    /* Button group */
+    .actions{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    button,
+    a.button{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: .95rem;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    button:hover,
+    a.button:hover{
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0,0,0,.12);
+    }
+
+    .primary{
+      background: #4f46e5;
+      color: #fff;
+    }
+
+    .secondary{
+      background: #e5e7eb;
+      color: #111;
+    }
+
+    .outline{
+      background: #fff;
+      border: 1px solid #c7d2fe;
+      color: #4338ca;
+    }
+
+    .footer{
+      margin-top: 28px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.06);
+      font-size: .9rem;
+      color: #444;
+    }
+
+    .footer code{
+      background: #f1f5f9;
+      padding: 3px 6px;
+      border-radius: 6px;
+      font-size: .85rem;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *{ transition: none !important; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <div class="row">
-        <h1 style="flex:1">SIPP Demo Platform</h1>
-        <span class="pill">Spoof money / demo data</span>
-      </div>
-      <p class="sub">
-        Member portal + Ops workflow hub. Tokens are stored in your browser.
-      </p>
 
-      <div class="warn">
-        If you change domains or clear cache, you may need to login again.
-      </div>
-    </div>
+  <div class="container">
+    <h1>SIPP Demo Platform</h1>
 
     <div class="grid">
+      <!-- MEMBER CARD -->
       <div class="card">
-        <h2 style="margin:0 0 8px">Member</h2>
-        <p class="muted" style="margin:0 0 12px">Create an account, deposit demo cash, invest, and submit payout requests.</p>
-        <div class="row">
-          <a class="btn primary" href="sipp-signup.html">Member sign up</a>
-          <a class="btn secondary" href="sipp-login.html?mode=member">Member login</a>
+        <div>
+          <h2>Member</h2>
+          <p>
+            Create a demo SIPP account, deposit virtual cash, invest in mock
+            funds, and submit income or tax-free cash payout requests.
+          </p>
         </div>
-        <div style="margin-top:10px">
-          <a class="btn secondary" href="sipp-member.html" style="width:100%">Go to member platform</a>
+
+        <div class="actions">
+          <a class="button primary" href="sipp-member-register.html">
+            Member sign up
+          </a>
+          <a class="button secondary" href="sipp-login.html">
+            Member login
+          </a>
+          <a class="button outline" href="sipp-member.html">
+            Go to member platform
+          </a>
         </div>
       </div>
 
+      <!-- OPS CARD -->
       <div class="card">
-        <h2 style="margin:0 0 8px">Ops / Workflow</h2>
-        <p class="muted" style="margin:0 0 12px">Process payout requests into demands, add notes, and complete work.</p>
-        <div class="row">
-          <a class="btn secondary" href="sipp-login.html?mode=ops">Ops login</a>
+        <div>
+          <h2>Ops / Workflow</h2>
+          <p>
+            Process payout requests into workflow demands, add operational
+            notes, assign work, and complete income or TFC processing.
+          </p>
         </div>
-        <div style="margin-top:10px">
-          <a class="btn primary" href="sipp-ops-workflow.html" style="width:100%">Go to Ops workflow hub</a>
+
+        <div class="actions">
+          <a class="button secondary" href="sipp-login.html">
+            Ops login
+          </a>
+          <a class="button primary" href="ops-workflow.html">
+            Go to Ops workflow hub
+          </a>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="muted">
-        Backend: <code>https://haldred1.org/sipp_api.php</code><br/>
-        Frontend: <code>https://haldred1.github.io/Cards/</code>
-      </div>
+    <div class="footer">
+      <strong>Environment</strong><br/>
+      Backend: <code>https://haldred1.org/sipp_api.php</code><br/>
+      Frontend: <code>https://haldred1.github.io/Cards/</code>
     </div>
   </div>
+
 </body>
 </html>
