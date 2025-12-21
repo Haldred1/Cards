@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Ops Workflow Hub</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
+    .container{max-width:1200px;margin:0 auto}
+    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .card{background:#fff;border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.08);padding:16px 16px;margin:12px 0}
+    a{color:#4f46e5;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .pill{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:999px;background:#eef2ff;color:#3730a3}
+    .muted{color:#6b7280}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:12px}
+    select,button,input{padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;box-sizing:border-box}
+    button{border:none;background:#4f46e5;color:#fff;font-weight:800}
+    button.secondary{background:#e5e7eb;color:#111;border:1px solid #cbd5e1}
+    table{width:100%;border-collapse:collapse;font-size:.92rem}
+    th,td{padding:10px 8px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+    th{color:#374151;background:#f3f4f6}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .msg{margin-top:10px;color:#b91c1c}
+    .ok{color:#15803d}
+    .tag{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:999px}
+    .t-open{background:#dcfce7;color:#166534}
+    .t-prog{background:#fef3c7;color:#92400e}
+    .t-done{background:#e5e7eb;color:#111827}
+    .t-rej{background:#fee2e2;color:#991b1b}
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="top">
+    <div>
+      <div class="row">
+        <a href="sipp-home.html">← Home</a>
+        <span class="pill">Ops</span>
+      </div>
+      <h1 style="margin:6px 0 0">Workflow Hub</h1>
+      <div class="muted" id="who"></div>
+    </div>
+    <div class="row">
+      <button class="secondary" id="refreshBtn" type="button">Refresh</button>
+      <button class="secondary" id="logoutBtn" type="button">Logout</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h3 style="margin:0 0 4px">Payout requests</h3>
+          <div class="muted">Create demands from requests.</div>
+        </div>
+        <div class="row">
+          <select id="reqStatus">
+            <option>Open</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+            <option>Rejected</option>
+          </select>
+          <button class="secondary" id="reqLoadBtn" type="button">Load</button>
+        </div>
+      </div>
+
+      <div style="overflow:auto;margin-top:10px">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Member</th><th>Type</th><th>Freq</th><th>Date</th><th>Income</th><th>TFC</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reqBody"></tbody>
+        </table>
+      </div>
+      <div class="msg" id="reqMsg"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h3 style="margin:0 0 4px">Demands queue</h3>
+          <div class="muted">Work items created from requests.</div>
+        </div>
+        <div class="row">
+          <select id="demStatus">
+            <option>Open</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+          </select>
+          <select id="demQueue">
+            <option value="">All queues</option>
+            <option>Income</option>
+            <option>TFC</option>
+            <option>Mixed</option>
+          </select>
+          <button class="secondary" id="demLoadBtn" type="button">Load</button>
+        </div>
+      </div>
+
+      <div style="overflow:auto;margin-top:10px">
+        <table>
+          <thead>
+            <tr>
+              <th>Demand</th><th>SIPP</th><th>Name</th><th>Queue</th><th>Req Type</th><th>Income</th><th>TFC</th><th>Status</th><th>Open</th>
+            </tr>
+          </thead>
+          <tbody id="demBody"></tbody>
+        </table>
+      </div>
+      <div class="msg" id="demMsg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://haldred1.org/sipp_api.php";
+  const OPS_TOKEN_KEY = "SIPP_OPS_TOKEN";
+
+  const who = document.getElementById("who");
+  const reqBody = document.getElementById("reqBody");
+  const demBody = document.getElementById("demBody");
+
+  function token(){ return localStorage.getItem(OPS_TOKEN_KEY) || ""; }
+  function authHeaders(){
+    const t = token();
+    return t ? { "Authorization":"Bearer " + t } : {};
+  }
+
+  function setMsg(el, text, ok=false){
+    el.className = "msg" + (ok ? " ok" : "");
+    el.textContent = text || "";
+  }
+
+  function money(v){ return "£" + String(v ?? "0.00"); }
+
+  function reqTag(st){
+    if (st==="Open") return `<span class="tag t-open">Open</span>`;
+    if (st==="In Progress") return `<span class="tag t-prog">In Progress</span>`;
+    if (st==="Completed") return `<span class="tag t-done">Completed</span>`;
+    return `<span class="tag t-rej">Rejected</span>`;
+  }
+
+  async function apiGet(url){
+    const res = await fetch(url, { headers: { ...authHeaders() } });
+    const out = await res.json().catch(()=>null);
+    if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+    return out;
+  }
+
+  async function apiPost(action, payload){
+    const res = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json", ...authHeaders() },
+      body: JSON.stringify(payload || {})
+    });
+    const out = await res.json().catch(()=>null);
+    if (!res.ok) throw new Error(out?.error || `Request failed (HTTP ${res.status})`);
+    return out;
+  }
+
+  async function loadMe(){
+    const out = await apiGet(`${API_URL}?action=me`);
+    if (!out?.user || out.user.role !== "ops"){
+      localStorage.removeItem(OPS_TOKEN_KEY);
+      location.href = "sipp-login.html?mode=ops";
+      return;
+    }
+    who.textContent = `${out.user.email} — role: ${out.user.role}`;
+  }
+
+  async function loadRequests(){
+    const el = document.getElementById("reqMsg");
+    setMsg(el, "");
+    reqBody.innerHTML = "";
+
+    const st = document.getElementById("reqStatus").value;
+    try{
+      const rows = await apiGet(`${API_URL}?action=ops_list_requests&status=${encodeURIComponent(st)}`);
+
+      if (!rows.length){
+        reqBody.innerHTML = `<tr><td colspan="9" class="muted">No requests.</td></tr>`;
+        return;
+      }
+
+      rows.forEach(r=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td><strong>${r.sipp_ref}</strong><br>${r.full_name}</td>
+          <td>${r.request_type}</td>
+          <td>${r.frequency}</td>
+          <td>${r.payout_date || "ASAP"}</td>
+          <td>${money(r.income_amount)}</td>
+          <td>${money(r.tfc_amount)}</td>
+          <td>${reqTag(r.status)}</td>
+          <td>
+            <button class="secondary" type="button" data-demand="${r.id}" style="width:100%">
+              Create demand
+            </button>
+          </td>
+        `;
+        reqBody.appendChild(tr);
+      });
+
+      // create demand buttons
+      reqBody.querySelectorAll("button[data-demand]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const reqId = parseInt(btn.getAttribute("data-demand"), 10);
+          btn.disabled = true;
+          try{
+            await apiPost("ops_create_demand", { payout_request_id: reqId });
+            setMsg(el, `Demand created for request #${reqId}.`, true);
+            await loadRequests();
+            await loadDemands();
+          }catch(e){
+            setMsg(el, e?.message || String(e));
+          }finally{
+            btn.disabled = false;
+          }
+        });
+      });
+
+    }catch(e){
+      setMsg(el, e?.message || String(e));
+    }
+  }
+
+  async function loadDemands(){
+    const el = document.getElementById("demMsg");
+    setMsg(el, "");
+    demBody.innerHTML = "";
+
+    const st = document.getElementById("demStatus").value;
+    const q = document.getElementById("demQueue").value;
+
+    const qs = new URLSearchParams({ action:"ops_list_demands", status: st });
+    if (q) qs.set("queue", q);
+
+    try{
+      const rows = await apiGet(`${API_URL}?${qs.toString()}`);
+
+      if (!rows.length){
+        demBody.innerHTML = `<tr><td colspan="9" class="muted">No demands.</td></tr>`;
+        return;
+      }
+
+      rows.forEach(d=>{
+        const link = `sipp-demand.html?id=${encodeURIComponent(d.id)}`;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>#${d.id}</strong><br><span class="muted">Req #${d.payout_request_id}</span></td>
+          <td>${d.sipp_ref}</td>
+          <td>${d.full_name}</td>
+          <td><strong>${d.queue}</strong></td>
+          <td>${d.request_type}</td>
+          <td>${money(d.income_amount)}</td>
+          <td>${money(d.tfc_amount)}</td>
+          <td><strong>${d.status}</strong></td>
+          <td><a href="${link}" style="font-weight:900">Open</a></td>
+        `;
+        demBody.appendChild(tr);
+      });
+
+    }catch(e){
+      setMsg(el, e?.message || String(e));
+    }
+  }
+
+  // Buttons
+  document.getElementById("logoutBtn").addEventListener("click", ()=>{
+    localStorage.removeItem(OPS_TOKEN_KEY);
+    location.href = "sipp-login.html?mode=ops";
+  });
+  document.getElementById("refreshBtn").addEventListener("click", async ()=>{
+    await loadRequests();
+    await loadDemands();
+  });
+  document.getElementById("reqLoadBtn").addEventListener("click", loadRequests);
+  document.getElementById("demLoadBtn").addEventListener("click", loadDemands);
+
+  // Init
+  (async ()=>{
+    if (!token()){ location.href="sipp-login.html?mode=ops"; return; }
+    try{
+      await loadMe();
+      await loadRequests();
+      await loadDemands();
+    }catch(e){
+      console.error(e);
+      localStorage.removeItem(OPS_TOKEN_KEY);
+      location.href="sipp-login.html?mode=ops";
+    }
+  })();
+</script>
+</body>
+</html>
+
