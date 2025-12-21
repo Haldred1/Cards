@@ -1,130 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Member Sign Up</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#111}
-    .container{max-width:900px;margin:0 auto}
-    .card{background:#fff;border-radius:16px;box-shadow:0 10px 22px rgba(0,0,0,.08);padding:18px 18px;margin:14px 0}
-    a{color:#4f46e5;text-decoration:none}
-    a:hover{text-decoration:underline}
-    h2{margin:0 0 12px}
-    label{font-size:.85rem;color:#444;display:block;margin-bottom:6px}
-    input,button{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;font-size:1rem}
-    button{border:none;background:#4f46e5;color:#fff;font-weight:800;cursor:pointer}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .msg{margin-top:10px;color:#b91c1c}
-    .ok{color:#15803d}
-    .pill{display:inline-block;font-size:.78rem;font-weight:800;padding:3px 10px;border-radius:999px;background:#eef2ff;color:#3730a3}
-    @media (max-width:800px){.grid{grid-template-columns:1fr}}
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>SIPP Member Sign Up</title>
+
+<style>
+body{
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  background:#f5f7fb;
+  margin:0;
+  padding:20px;
+}
+.container{max-width:900px;margin:0 auto}
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:16px;
+  box-shadow:0 10px 22px rgba(0,0,0,.08);
+}
+h1,h2{margin-top:0}
+label{display:block;font-weight:600;margin-top:12px}
+input{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #cbd5e1;
+}
+button{
+  margin-top:20px;
+  padding:12px 18px;
+  border-radius:12px;
+  border:none;
+  background:#4f46e5;
+  color:#fff;
+  font-size:1rem;
+  cursor:pointer;
+}
+.error{color:#b91c1c;margin-top:10px}
+</style>
 </head>
+
 <body>
 <div class="container">
-  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-    <a href="sipp-home.html">← Home</a>
-    <span class="pill">Member sign up</span>
-  </div>
+<h1>Create SIPP Account</h1>
 
-  <div class="card">
-    <h2>Create member account</h2>
+<form id="signup">
 
-    <div class="grid">
-      <div>
-        <label>Email</label>
-        <input id="email" type="email" placeholder="name@email.com" autocomplete="email"/>
-      </div>
-      <div>
-        <label>Password</label>
-        <input id="password" type="password" placeholder="Create a password" autocomplete="new-password"/>
-      </div>
+<div class="card">
+<h2>Member details</h2>
+<label>Email</label><input id="email" required>
+<label>Password</label><input id="password" type="password" required>
+<label>Full name</label><input id="full">
+<label>NI number</label><input id="ni">
+<label>Address line 1</label><input id="a1">
+<label>Address line 2</label><input id="a2">
+<label>City</label><input id="city">
+<label>Postcode</label><input id="pc">
+</div>
 
-      <div>
-        <label>Full name</label>
-        <input id="full_name" placeholder="Full name"/>
-      </div>
-      <div>
-        <label>NI number (demo allowed)</label>
-        <input id="ni_number" placeholder="NI1234A"/>
-      </div>
+<div class="card">
+<h2>Adviser firm</h2>
+<label>Firm name</label><input id="firm">
+<label>Address line 1</label><input id="fa1">
+<label>Address line 2</label><input id="fa2">
+<label>City</label><input id="fcity">
+<label>Postcode</label><input id="fpc">
+<label>Contact name</label><input id="fname">
+<label>Contact email</label><input id="femail">
+<label>Contact phone</label><input id="fphone">
+</div>
 
-      <div>
-        <label>Address line 1</label>
-        <input id="address_line1" placeholder="1 High Street"/>
-      </div>
-      <div>
-        <label>Address line 2 (optional)</label>
-        <input id="address_line2" placeholder="Flat 2"/>
-      </div>
-
-      <div>
-        <label>City</label>
-        <input id="city" placeholder="Glasgow"/>
-      </div>
-      <div>
-        <label>Postcode</label>
-        <input id="postcode" placeholder="G1 1AA"/>
-      </div>
-    </div>
-
-    <div style="margin-top:12px">
-      <button id="signupBtn" type="button">Create account</button>
-    </div>
-
-    <div class="msg" id="msg"></div>
-    <div style="margin-top:10px">
-      <a href="sipp-login.html?mode=member" style="font-weight:800">Already registered? Login</a>
-    </div>
-  </div>
+<button>Create account</button>
+<div class="error" id="err"></div>
+</form>
 </div>
 
 <script>
-  const API_URL = "https://haldred1.org/sipp_api.php";
-  const msg = document.getElementById("msg");
+const API = "https://haldred1.org/sipp_api.php";
 
-  function setMsg(text, ok=false){
-    msg.className = "msg" + (ok ? " ok" : "");
-    msg.textContent = text || "";
+document.getElementById("signup").addEventListener("submit", async e=>{
+  e.preventDefault();
+  err.textContent="";
+
+  const body = {
+    email: email.value,
+    password: password.value,
+    full_name: full.value,
+    ni_number: ni.value,
+    address_line1: a1.value,
+    address_line2: a2.value,
+    city: city.value,
+    postcode: pc.value,
+
+    adviser_firm_name: firm.value,
+    adviser_address_line1: fa1.value,
+    adviser_address_line2: fa2.value,
+    adviser_city: fcity.value,
+    adviser_postcode: fpc.value,
+    adviser_contact_name: fname.value,
+    adviser_contact_email: femail.value,
+    adviser_contact_phone: fphone.value
+  };
+
+  try{
+    const r = await fetch(API+"?action=member_register",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(body)
+    });
+    const out = await r.json();
+    if(!r.ok) throw new Error(out.error);
+    alert("Account created. SIPP ref: "+out.sipp_ref);
+    location.href="sipp-login.html";
+  }catch(e){
+    err.textContent=e.message;
   }
-
-  document.getElementById("signupBtn").addEventListener("click", async () => {
-    setMsg("");
-
-    const payload = {
-      email: (document.getElementById("email").value || "").trim(),
-      password: document.getElementById("password").value || "",
-      full_name: (document.getElementById("full_name").value || "").trim(),
-      ni_number: (document.getElementById("ni_number").value || "").trim(),
-      address_line1: (document.getElementById("address_line1").value || "").trim(),
-      address_line2: (document.getElementById("address_line2").value || "").trim(),
-      city: (document.getElementById("city").value || "").trim(),
-      postcode: (document.getElementById("postcode").value || "").trim()
-    };
-
-    if (!payload.email || !payload.password || !payload.full_name || !payload.ni_number ||
-        !payload.address_line1 || !payload.city || !payload.postcode){
-      setMsg("Please fill in all required fields.");
-      return;
-    }
-
-    try{
-      const res = await fetch(`${API_URL}?action=member_register`, {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const out = await res.json().catch(()=>null);
-      if (!res.ok) throw new Error(out?.error || `Signup failed (HTTP ${res.status})`);
-
-      setMsg(`Account created. Your SIPP ref: ${out?.sipp_ref || "(unknown)"}. You can login now.`, true);
-      setTimeout(()=>location.href="sipp-login.html?mode=member", 700);
-    }catch(e){
-      setMsg(e?.message || String(e));
-    }
-  });
+});
 </script>
 </body>
 </html>
