@@ -127,8 +127,8 @@ async function apiPost(action, payload){
 }
 
 async function apiPatch(action, payload){
-  const res = await fetch(`${API_URL}?action=${action}`,{
-    method:"PATCH",
+  const res = await fetch(`${API_URL}?action=${encodeURIComponent(action)}`,{
+    method:"POST",
     headers:{ "Content-Type":"application/json", ...authHeaders() },
     body: JSON.stringify(payload || {})
   });
@@ -223,3 +223,4 @@ document.getElementById("noteBtn").onclick = async ()=>{
 </script>
 </body>
 </html>
+
