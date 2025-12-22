@@ -19,9 +19,31 @@
       display:flex;
       justify-content:space-between;
       align-items:center;
-      margin-bottom:16px;
+      margin-bottom:12px;
     }
     h1{margin:0}
+
+    /* Tabs */
+    .tabs{
+      display:flex;
+      gap:8px;
+      margin:12px 0 18px;
+    }
+    .tab{
+      padding:10px 18px;
+      border-radius:12px;
+      border:1px solid #cbd5e1;
+      background:#f8fafc;
+      font-weight:800;
+      cursor:pointer;
+      color:#334155;
+    }
+    .tab.active{
+      background:#4f46e5;
+      color:#fff;
+      border-color:#4f46e5;
+    }
+
     .card{
       background:#fff;
       border-radius:16px;
@@ -94,106 +116,139 @@
     <button id="logoutBtn" class="secondary">Logout</button>
   </div>
 
-  <!-- ACCOUNT -->
-  <div class="card">
-    <div class="row">
-      <div>
-        <div style="font-size:.9rem;color:#555">Cash balance</div>
-        <div style="font-size:2.2rem;font-weight:900" id="cash">£0.00</div>
-        <div id="sippRef" style="margin-top:4px;color:#555"></div>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="transactions">Transactions</button>
+  </div>
+
+  <!-- ================= OVERVIEW TAB ================= -->
+  <div id="tab-overview" class="tab-panel">
+
+    <!-- ACCOUNT -->
+    <div class="card">
+      <div class="row">
+        <div>
+          <div style="font-size:.9rem;color:#555">Cash balance</div>
+          <div style="font-size:2.2rem;font-weight:900" id="cash">£0.00</div>
+          <div id="sippRef" style="margin-top:4px;color:#555"></div>
+        </div>
+        <span class="pill right">Member</span>
       </div>
-      <span class="pill right">Member</span>
-    </div>
-  </div>
-
-  <div class="grid">
-    <!-- DEPOSIT -->
-    <div class="card">
-      <h3>Deposit demo cash</h3>
-      <label>Amount (£)</label>
-      <input id="depositAmount" placeholder="100.00"/>
-      <button id="depositBtn" style="margin-top:10px">Deposit</button>
-      <div id="depositMsg" class="msg"></div>
     </div>
 
-    <!-- BUY -->
-    <div class="card">
-      <h3>Buy investment</h3>
-      <label>Investment</label>
-      <select id="buyInv"></select>
-      <label style="margin-top:10px">Amount (£)</label>
-      <input id="buyAmount" placeholder="50.00"/>
-      <button id="buyBtn" style="margin-top:10px">Buy</button>
-      <div id="buyMsg" class="msg"></div>
+    <div class="grid">
+      <!-- DEPOSIT -->
+      <div class="card">
+        <h3>Deposit demo cash</h3>
+        <label>Amount (£)</label>
+        <input id="depositAmount" placeholder="100.00"/>
+        <button id="depositBtn" style="margin-top:10px">Deposit</button>
+        <div id="depositMsg" class="msg"></div>
+      </div>
+
+      <!-- BUY -->
+      <div class="card">
+        <h3>Buy investment</h3>
+        <label>Investment</label>
+        <select id="buyInv"></select>
+        <label style="margin-top:10px">Amount (£)</label>
+        <input id="buyAmount" placeholder="50.00"/>
+        <button id="buyBtn" style="margin-top:10px">Buy</button>
+        <div id="buyMsg" class="msg"></div>
+      </div>
+
+      <!-- SELL -->
+      <div class="card">
+        <h3>Sell investment</h3>
+        <label>Holding</label>
+        <select id="sellHolding"></select>
+        <label style="margin-top:10px">Units</label>
+        <input id="sellUnits" placeholder="0.500000"/>
+        <button id="sellBtn" style="margin-top:10px">Sell</button>
+        <div id="sellMsg" class="msg"></div>
+      </div>
     </div>
 
-    <!-- SELL -->
+    <!-- HOLDINGS -->
     <div class="card">
-      <h3>Sell investment</h3>
-      <label>Holding</label>
-      <select id="sellHolding"></select>
-      <label style="margin-top:10px">Units</label>
-      <input id="sellUnits" placeholder="0.500000"/>
-      <button id="sellBtn" style="margin-top:10px">Sell</button>
-      <div id="sellMsg" class="msg"></div>
-    </div>
-  </div>
-
-  <!-- HOLDINGS -->
-  <div class="card">
-    <h3>Holdings</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Code</th><th>Name</th><th>Risk</th><th>Price</th><th>Units</th>
-        </tr>
-      </thead>
-      <tbody id="holdingsBody"></tbody>
-    </table>
-  </div>
-
-  <!-- PAYOUT REQUEST -->
-  <div class="grid">
-    <div class="card">
-      <h3>Request payout</h3>
-
-      <label>Type</label>
-      <select id="reqType">
-        <option>Income</option>
-        <option>TFC</option>
-        <option>Income+TFC</option>
-      </select>
-
-      <label style="margin-top:10px">Frequency</label>
-      <select id="reqFreq">
-        <option>Single</option>
-        <option>Monthly</option>
-      </select>
-
-      <label style="margin-top:10px">Payout date (optional)</label>
-      <input id="reqDate" placeholder="YYYY-MM-DD (blank = ASAP)"/>
-
-      <label style="margin-top:10px">Income amount (£)</label>
-      <input id="reqIncome" placeholder="0.00"/>
-
-      <label style="margin-top:10px">TFC amount (£)</label>
-      <input id="reqTfc" placeholder="0.00"/>
-
-      <button id="reqBtn" style="margin-top:12px">Submit request</button>
-      <div id="reqMsg" class="msg"></div>
-    </div>
-
-    <!-- REQUEST HISTORY -->
-    <div class="card">
-      <h3>My payout requests</h3>
+      <h3>Holdings</h3>
       <table>
         <thead>
           <tr>
-            <th>#</th><th>Type</th><th>Freq</th><th>Date</th>
-            <th>Income</th><th>TFC</th><th>Status</th>
+            <th>Code</th><th>Name</th><th>Risk</th><th>Price</th><th>Units</th>
           </tr>
         </thead>
-        <tbody id="reqBody"></tbody>
+        <tbody id="holdingsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- PAYOUT REQUEST -->
+    <div class="grid">
+      <div class="card">
+        <h3>Request payout</h3>
+
+        <label>Type</label>
+        <select id="reqType">
+          <option>Income</option>
+          <option>TFC</option>
+          <option>Income+TFC</option>
+        </select>
+
+        <label style="margin-top:10px">Frequency</label>
+        <select id="reqFreq">
+          <option>Single</option>
+          <option>Monthly</option>
+        </select>
+
+        <label style="margin-top:10px">Payout date (optional)</label>
+        <input id="reqDate"/>
+
+        <label style="margin-top:10px">Income amount (£)</label>
+        <input id="reqIncome"/>
+
+        <label style="margin-top:10px">TFC amount (£)</label>
+        <input id="reqTfc"/>
+
+        <button id="reqBtn" style="margin-top:12px">Submit request</button>
+        <div id="reqMsg" class="msg"></div>
+      </div>
+
+      <div class="card">
+        <h3>My payout requests</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Type</th><th>Freq</th><th>Date</th>
+              <th>Income</th><th>TFC</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="reqBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= TRANSACTIONS TAB ================= -->
+  <div id="tab-transactions" class="tab-panel" style="display:none">
+    <div class="card">
+      <h3>Transactions</h3>
+      <div class="muted" style="margin-bottom:10px">
+        All money movements on your SIPP.
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Direction</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="txBody">
+          <tr><td colspan="4" class="muted">Transactions will appear here.</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -201,143 +256,74 @@
 </div>
 
 <script>
-const API = "https://haldred1.org/sipp_api.php";
-const TOKEN_KEY = "SIPP_MEMBER_TOKEN";
+const API="https://haldred1.org/sipp_api.php";
+const TOKEN_KEY="SIPP_MEMBER_TOKEN";
+function token(){return localStorage.getItem(TOKEN_KEY)||""}
+function auth(){return{"Authorization":"Bearer "+token()}}
+function money(v){return "£"+(v||"0.00")}
+function msg(el,t,ok=false){el.textContent=t||"";el.className="msg"+(ok?" ok":"")}
 
-function token(){ return localStorage.getItem(TOKEN_KEY)||""; }
-function auth(){ return { "Authorization":"Bearer "+token() }; }
-function money(v){ return "£"+(v||"0.00"); }
-
-function msg(el,t,ok=false){
-  el.textContent=t||"";
-  el.className="msg"+(ok?" ok":"");
-}
-
-async function apiGet(action){
-  const r=await fetch(`${API}?action=${action}`,{headers:auth()});
+async function apiGet(a){
+  const r=await fetch(`${API}?action=${a}`,{headers:auth()});
   const j=await r.json();
   if(!r.ok) throw new Error(j.error);
   return j;
 }
-async function apiPost(action,data){
-  const r=await fetch(`${API}?action=${action}`,{
+async function apiPost(a,d){
+  const r=await fetch(`${API}?action=${a}`,{
     method:"POST",
     headers:{...auth(),"Content-Type":"application/json"},
-    body:JSON.stringify(data||{})
+    body:JSON.stringify(d||{})
   });
   const j=await r.json();
   if(!r.ok) throw new Error(j.error);
   return j;
 }
 
+/* Tabs */
+document.querySelectorAll(".tab").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    b.classList.add("active");
+    document.querySelectorAll(".tab-panel").forEach(p=>p.style.display="none");
+    document.getElementById("tab-"+b.dataset.tab).style.display="block";
+  };
+});
+
+/* Existing logic */
 async function loadAll(){
   const me=await apiGet("me");
-  if(me.user.role!=="member"){ location.href="sipp-login.html"; return; }
-
   document.getElementById("who").textContent=`${me.user.email} (member)`;
   document.getElementById("cash").textContent=money(me.account.cash_balance);
   document.getElementById("sippRef").textContent=`SIPP ref: ${me.member.sipp_ref}`;
-
   const invs=await apiGet("investments");
-  const buy=document.getElementById("buyInv");
-  buy.innerHTML="";
+  buyInv.innerHTML="";
   invs.forEach(i=>{
     const o=document.createElement("option");
-    o.value=i.id;
-    o.textContent=`${i.code} — ${i.name} (${i.risk})`;
-    buy.appendChild(o);
+    o.value=i.id;o.textContent=`${i.code} — ${i.name}`;buyInv.appendChild(o);
   });
-
   const port=await apiGet("my_portfolio");
-  document.getElementById("cash").textContent=money(port.cash_balance);
-
-  const hb=document.getElementById("holdingsBody");
-  hb.innerHTML="";
-  const sell=document.getElementById("sellHolding");
-  sell.innerHTML="";
-  if(port.holdings.length===0){
-    hb.innerHTML="<tr><td colspan=5>No holdings</td></tr>";
-    sell.innerHTML="<option>No holdings</option>";
-  }else{
-    port.holdings.forEach(h=>{
-      hb.innerHTML+=`<tr>
-        <td>${h.code}</td><td>${h.name}</td><td>${h.risk}</td>
-        <td>${h.price_pennies}</td><td>${Number(h.units).toFixed(6)}</td>
-      </tr>`;
-      const o=document.createElement("option");
-      o.value=h.investment_id;
-      o.textContent=`${h.code} (${Number(h.units).toFixed(6)} units)`;
-      sell.appendChild(o);
-    });
-  }
-
+  holdingsBody.innerHTML="";
+  sellHolding.innerHTML="";
+  port.holdings.forEach(h=>{
+    holdingsBody.innerHTML+=`<tr><td>${h.code}</td><td>${h.name}</td><td>${h.risk}</td><td>${h.price_pennies}</td><td>${(+h.units).toFixed(6)}</td></tr>`;
+    const o=document.createElement("option");
+    o.value=h.investment_id;o.textContent=`${h.code} (${(+h.units).toFixed(6)})`;sellHolding.appendChild(o);
+  });
   const reqs=await apiGet("my_payout_requests");
-  const rb=document.getElementById("reqBody");
-  rb.innerHTML="";
+  reqBody.innerHTML="";
   reqs.forEach(r=>{
-    rb.innerHTML+=`<tr>
-      <td>${r.id}</td><td>${r.request_type}</td><td>${r.frequency}</td>
-      <td>${r.payout_date||"ASAP"}</td>
-      <td>${money(r.income_amount)}</td>
-      <td>${money(r.tfc_amount)}</td>
-      <td>${r.status}</td>
-    </tr>`;
+    reqBody.innerHTML+=`<tr><td>${r.id}</td><td>${r.request_type}</td><td>${r.frequency}</td><td>${r.payout_date||"ASAP"}</td><td>${money(r.income_amount)}</td><td>${money(r.tfc_amount)}</td><td>${r.status}</td></tr>`;
   });
 }
 
-document.getElementById("logoutBtn").onclick=()=>{
-  localStorage.removeItem(TOKEN_KEY);
-  location.href="sipp-login.html";
-};
+logoutBtn.onclick=()=>{localStorage.removeItem(TOKEN_KEY);location.href="sipp-login.html";}
+depositBtn.onclick=async()=>{await apiPost("deposit",{amount:depositAmount.value});loadAll();}
+buyBtn.onclick=async()=>{await apiPost("buy",{investment_id:+buyInv.value,amount:buyAmount.value});loadAll();}
+sellBtn.onclick=async()=>{await apiPost("sell",{investment_id:+sellHolding.value,units:+sellUnits.value});loadAll();}
+reqBtn.onclick=async()=>{await apiPost("create_payout_request",{request_type:reqType.value,frequency:reqFreq.value,payout_date:reqDate.value,income_amount:reqIncome.value,tfc_amount:reqTfc.value});loadAll();}
 
-document.getElementById("depositBtn").onclick=async()=>{
-  const el=document.getElementById("depositMsg");
-  try{
-    await apiPost("deposit",{amount:depositAmount.value});
-    msg(el,"Deposit complete",true);
-    depositAmount.value="";
-    loadAll();
-  }catch(e){msg(el,e.message);}
-};
-
-document.getElementById("buyBtn").onclick=async()=>{
-  const el=document.getElementById("buyMsg");
-  try{
-    const o=await apiPost("buy",{investment_id:+buyInv.value,amount:buyAmount.value});
-    msg(el,"Buy complete",true);
-    buyAmount.value="";
-    loadAll();
-  }catch(e){msg(el,e.message);}
-};
-
-document.getElementById("sellBtn").onclick=async()=>{
-  const el=document.getElementById("sellMsg");
-  try{
-    await apiPost("sell",{investment_id:+sellHolding.value,units:+sellUnits.value});
-    msg(el,"Sell complete",true);
-    sellUnits.value="";
-    loadAll();
-  }catch(e){msg(el,e.message);}
-};
-
-document.getElementById("reqBtn").onclick=async()=>{
-  const el=document.getElementById("reqMsg");
-  try{
-    await apiPost("create_payout_request",{
-      request_type:reqType.value,
-      frequency:reqFreq.value,
-      payout_date:reqDate.value,
-      income_amount:reqIncome.value,
-      tfc_amount:reqTfc.value
-    });
-    msg(el,"Request submitted",true);
-    reqIncome.value=reqTfc.value=reqDate.value="";
-    loadAll();
-  }catch(e){msg(el,e.message);}
-};
-
-if(!token()){location.href="sipp-login.html";}
-else loadAll();
+if(!token()) location.href="sipp-login.html"; else loadAll();
 </script>
 
 </body>
